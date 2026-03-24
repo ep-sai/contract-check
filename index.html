@@ -184,45 +184,11 @@
   <!-- ============================================================
        SETUP SCREEN – shown on first visit
        ============================================================ -->
-  <div id="setup">
-    <div class="card">
-      <h1>CSM Leistungsübersicht</h1>
-      <p>Einmalige Einrichtung – danach funktioniert die App für dein ganzes Team.</p>
-
-      <div class="step">
-        <strong>Schritt 1 – Supabase</strong>
-        <span>Projekt auf <code>supabase.com</code> erstellen, SQL ausführen, URL + Key kopieren.</span>
-      </div>
-      <div class="step">
-        <strong>Schritt 2 – OpenAI API Key</strong>
-        <span>Auf <code>platform.openai.com → API Keys</code> einen Key erstellen (<code>sk-...</code>).</span>
-      </div>
-
-      <div class="inputs">
-        <div>
-          <label>Supabase Project URL</label>
-          <input type="text" id="sb-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
-        </div>
-        <div>
-          <label>Supabase Anon Key</label>
-          <input type="text" id="sb-key" placeholder="eyJ...">
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">
-          <label>OpenAI API Key</label>
-          <input type="password" id="ai-key" placeholder="sk-...">
-          <span class="hint">Wird nur lokal in deinem Browser gespeichert – nicht übertragen.</span>
-        </div>
-      </div>
-
-      <div class="err" id="serr"></div>
-      <button class="btn" onclick="doConnect()">Verbinden &amp; starten →</button>
-    </div>
-  </div>
 
   <!-- ============================================================
        MAIN APP
        ============================================================ -->
-  <div id="app">
+<div id="app" style="display:block;">
 
     <!-- Top Navigation Bar -->
     <div class="topbar">
@@ -454,37 +420,25 @@
     /* ---------------------------------------------------------------
        App initialisation
     --------------------------------------------------------------- */
-    window.addEventListener('load', function () {
-      var u = ls('sb_url'), k = ls('sb_key'), a = ls('ai_key');
-      if (u && k) {
-        gi('sb-url').value = u;
-        gi('sb-key').value = k;
-        if (a) gi('ai-key').value = a;
-        doInit(u, k);
-      }
-    });
+const SUPABASE_URL = 'https://exsrtfiocqleaqqvcffq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3J0ZmlvY3FsZWFxcXZjZmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTE1ODQsImV4cCI6MjA4OTg2NzU4NH0.Oy7eEu4bkO9n3U6PbCPhEFOp4BjHXSeDNgVCa6AWSQ8';
 
-    async function doConnect() {
-      var u = gv('sb-url'), k = gv('sb-key'), a = gv('ai-key');
-      var err = gi('serr'), btn = document.querySelector('.btn');
-      if (!u || !k) { err.textContent = 'Bitte URL und Key ausfüllen.'; return; }
-      if (!u.startsWith('https://')) { err.textContent = 'URL muss mit https:// beginnen.'; return; }
-      err.textContent = ''; btn.textContent = 'Verbinde...'; btn.disabled = true;
-      try {
-        await doInit(u, k);
-        lss('sb_url', u); lss('sb_key', k); if (a) lss('ai_key', a);
-      } catch (e) {
-        err.textContent = 'Fehler: ' + e.message;
-        btn.textContent = 'Verbinden & starten →'; btn.disabled = false;
-      }
-    }
+window.addEventListener('load', function () {
+  doInit(SUPABASE_URL, SUPABASE_KEY).catch(function (e) {
+    console.error(e);
+    alert('Verbindung zu Supabase fehlgeschlagen: ' + e.message);
+  });
+});
+
+async function doConnect() {
+  return;
+}
 
     async function doInit(u, k) {
       SB = window.supabase.createClient(u, k);
       var r = await SB.from('kunden').select('id').limit(1);
       if (r.error) throw new Error(r.error.message);
-      gi('setup').style.display = 'none';
-      gi('app').style.display = 'block';
+if (gi('app')) gi('app').style.display = 'block';
       await doLoad();
     }
 
