@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Contract Check</title>
+</head>
+<body>
+
+<h1>Kundenliste</h1>
+<ul id="liste"></ul>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+  const supabaseUrl = 'https://exsrtfiocqleaqqvcffq.supabase.co'
+  const supabaseKey = 'sb_publishable_p76MwAWrCDPsshtZ9O4btw_N8ETuJmz'
+
+  const supabase = createClient(supabaseUrl, supabaseKey)
+
+  async function ladeDaten() {
+    const { data, error } = await supabase
+      .from('kunden')
+      .select('*')
+
+    if (error) {
+      console.error(error)
+      return
+    }
+
+    const liste = document.getElementById('liste')
+
+    data.forEach(kunde => {
+      const li = document.createElement('li')
+      li.textContent = kunde.kunde
+      liste.appendChild(li)
+    })
+  }
+
+  ladeDaten()
+</script>
+
+</body>
+</html>
