@@ -7,880 +7,579 @@
   <meta name="author" content="Smile AI GmbH">
   <title>DealDesk</title>
 
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-  <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-authentication-library/2.38.0/msal-browser.min.js"></script>
 
-  <!-- PDF.js for PDF text extraction -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-
-  <!-- ============================================================
-       STYLES
-       ============================================================ -->
   <style>
-    /* ---------- Design Tokens ---------- */
     :root {
-      --bg: #F7F6F2;
-      --surface: #fff;
-      --surface2: #F0EEE8;
-      --border: #E2DED6;
-      --border2: #CCC8BE;
-      --text: #1A1916;
-      --text2: #6B6860;
-      --text3: #9E9B93;
-      --accent: #1A1916;
-      --accent-fg: #F7F6F2;
-      --green: #2D6A4F;
-      --green-bg: #D8F3DC;
-      --amber: #7B5E1A;
-      --amber-bg: #FFF3CD;
-      --red: #7B2020;
-      --red-bg: #FFE0E0;
-      --blue: #1A4A7B;
-      --blue-bg: #E0EEFF;
-      --r: 8px;
-      --rl: 12px;
-      --sh: 0 1px 3px rgba(0,0,0,.06);
+      --bg:#F7F6F2;--surface:#fff;--surface2:#F0EEE8;--border:#E2DED6;--border2:#CCC8BE;
+      --text:#1A1916;--text2:#6B6860;--text3:#9E9B93;--accent:#1A1916;--accent-fg:#F7F6F2;
+      --green:#2D6A4F;--green-bg:#D8F3DC;--amber:#7B5E1A;--amber-bg:#FFF3CD;
+      --red:#7B2020;--red-bg:#FFE0E0;--blue:#1A4A7B;--blue-bg:#E0EEFF;
+      --r:8px;--rl:12px;--sh:0 1px 3px rgba(0,0,0,.06);
     }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
 
-    /* ---------- Reset ---------- */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: "DM Sans", sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 14px; }
+    /* Login */
+    #login-screen{display:none;align-items:center;justify-content:center;min-height:100vh;padding:2rem;background:var(--bg);}
+    .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:3rem 2.5rem;max-width:400px;width:100%;box-shadow:var(--sh);text-align:center;}
+    .login-card h1{font-size:26px;font-weight:600;margin-bottom:6px;}
+    .login-card p{color:var(--text2);font-size:14px;margin-bottom:2rem;}
+    .ms-btn{background:#0078d4;color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:"DM Sans",sans-serif;display:inline-flex;align-items:center;gap:10px;transition:opacity .15s;}
+    .ms-btn:hover{opacity:.85;}
+    .login-err{color:var(--red);font-size:13px;margin-top:12px;}
+    .login-hint{color:var(--text3);font-size:11px;margin-top:1.5rem;}
 
-    /* ---------- Setup Screen ---------- */
-    #setup { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem; }
-    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); padding: 2.5rem; max-width: 540px; width: 100%; box-shadow: var(--sh); }
-    .card h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
-    .card p { color: var(--text2); line-height: 1.6; margin-bottom: 1.5rem; font-size: 14px; }
-    .step { background: var(--surface2); border-radius: var(--r); padding: 1rem 1.25rem; margin-bottom: 10px; border-left: 3px solid var(--accent); }
-    .step strong { font-size: 13px; font-weight: 600; display: block; margin-bottom: 4px; }
-    .step span { font-size: 13px; color: var(--text2); }
-    .step code { font-family: "DM Mono", monospace; font-size: 12px; background: var(--border); padding: 1px 5px; border-radius: 3px; }
-    .inputs { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 10px; }
-    .inputs label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 3px; display: block; }
-    .inputs input { width: 100%; padding: 9px 12px; border: 1px solid var(--border2); border-radius: var(--r); font-family: "DM Mono", monospace; font-size: 12px; background: var(--surface); color: var(--text); outline: none; }
-    .inputs input:focus { border-color: var(--accent); }
-    .hint { font-size: 11px; color: var(--text3); margin-top: 4px; display: block; }
-    .btn { background: var(--accent); color: var(--accent-fg); border: none; border-radius: var(--r); padding: 10px 20px; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; margin-top: 1rem; transition: opacity .15s; }
-    .btn:hover { opacity: .85; }
-    .err { color: var(--red); font-size: 13px; margin-top: 8px; }
-
-    /* ---------- Main App ---------- */
-    #app { display: none; }
-    .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 2rem; height: 56px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
-    .logo { font-size: 18px; font-weight: 600; letter-spacing: -.3px; }
-    .logo span { color: var(--text3); font-weight: 300; }
-    .sp { flex: 1; }
-    .tbtn { background: none; border: 1px solid var(--border2); border-radius: var(--r); padding: 6px 14px; font-family: "DM Sans", sans-serif; font-size: 13px; cursor: pointer; color: var(--text); display: flex; align-items: center; gap: 6px; transition: background .12s; white-space: nowrap; }
-    .tbtn:hover { background: var(--surface2); }
-    .tbtn.pri { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
-    .tbtn.pri:hover { opacity: .85; }
-
-    /* ---------- Main Content ---------- */
-    .main { padding: 2rem; max-width: 1400px; margin: 0 auto; }
-
-    /* ---------- Tabs ---------- */
-    .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
-    .tab { background: none; border: none; border-bottom: 2px solid transparent; padding: 10px 20px; font-family: "DM Sans", sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; color: var(--text2); margin-bottom: -1px; transition: color .15s; }
-    .tab:hover { color: var(--text); }
-    .tab.on { color: var(--text); border-bottom-color: var(--accent); }
-    .tc { display: none; }
-    .tc.on { display: block; }
-
-    /* ---------- Stats Cards ---------- */
-    .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 1.5rem; }
-    .sc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.25rem 1.5rem; box-shadow: var(--sh); }
-    .sl { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: .6px; margin-bottom: 6px; }
-    .sv { font-size: 28px; font-weight: 600; letter-spacing: -.5px; }
-    .ss { font-size: 11px; color: var(--text3); margin-top: 3px; }
-
-    /* ---------- Toolbar ---------- */
-    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; flex-wrap: wrap; }
-    .toolbar input { padding: 8px 12px; border: 1px solid var(--border2); border-radius: var(--r); font-family: "DM Sans", sans-serif; font-size: 13px; background: var(--surface); color: var(--text); outline: none; width: 200px; }
-    .toolbar input:focus { border-color: var(--accent); }
-    .toolbar select { padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--r); font-family: "DM Sans", sans-serif; font-size: 13px; background: var(--surface); color: var(--text); outline: none; cursor: pointer; }
-
-    /* ---------- Table ---------- */
-    .tcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--rl); box-shadow: var(--sh); overflow: hidden; }
-    .twrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th { background: var(--surface2); color: var(--text2); font-weight: 500; padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
-    td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #FAFAF8; }
-    .kname { font-weight: 500; font-size: 13px; min-width: 160px; }
-    .kname small { font-weight: 400; color: var(--text3); font-size: 11px; display: block; margin-top: 2px; font-family: "DM Mono", monospace; }
-    .tag { display: inline-block; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 2px 7px; font-size: 11px; margin: 2px 2px 2px 0; color: var(--text2); }
-    .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 500; }
-    .bok { background: var(--green-bg); color: var(--green); }
-    .bwarn { background: var(--amber-bg); color: var(--amber); }
-    .bdanger { background: var(--red-bg); color: var(--red); }
-    .binfo { background: var(--blue-bg); color: var(--blue); }
-    .ic { background: none; border: none; cursor: pointer; color: var(--text3); padding: 4px 6px; border-radius: 4px; font-size: 13px; transition: color .1s, background .1s; }
-    .ic:hover { color: var(--text); background: var(--surface2); }
-    .ic.del:hover { color: var(--red); }
-    .edit { cursor: pointer; border-bottom: 1px dashed var(--border2); padding-bottom: 1px; }
-
-    /* ---------- Leistungsmatrix ---------- */
-    .mwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--rl); background: var(--surface); }
-    .mtable { border-collapse: collapse; font-size: 12px; min-width: 100%; }
-    .mtable th { background: var(--surface2); padding: 8px 12px; border: 1px solid var(--border); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--text2); white-space: nowrap; }
-    .mtable th.kc { min-width: 180px; text-align: left; position: sticky; left: 0; z-index: 2; }
-    .mtable td { padding: 8px 12px; border: 1px solid var(--border); text-align: center; }
-    .mtable td.kn { text-align: left; font-weight: 500; font-size: 12px; position: sticky; left: 0; background: var(--surface); z-index: 1; }
-    .mtable td.kn small { display: block; font-weight: 400; color: var(--text3); font-size: 11px; }
-    .mchk { color: var(--green); font-size: 15px; }
-    .mempty { color: var(--border2); }
-
-    /* ---------- Leistungs-Filter ---------- */
-    .lfilter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
-    .ftag { background: var(--surface2); border: 1px solid var(--border2); border-radius: 999px; padding: 4px 12px; font-size: 12px; cursor: pointer; color: var(--text2); transition: all .12s; }
-    .ftag.on { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
-
-    /* ---------- Modals ---------- */
-    .mbg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.35); z-index: 200; align-items: center; justify-content: center; padding: 1rem; }
-    .mbg.on { display: flex; }
-    .modal { background: var(--surface); border-radius: var(--rl); padding: 2rem; max-width: 540px; width: 100%; box-shadow: 0 20px 40px rgba(0,0,0,.12); max-height: 90vh; overflow-y: auto; }
-    .modal h3 { font-size: 17px; font-weight: 600; margin-bottom: 1.25rem; }
-    .fg { margin-bottom: 14px; }
-    .fg label { font-size: 12px; font-weight: 500; color: var(--text2); margin-bottom: 4px; display: block; }
-    .fg input, .fg textarea, .fg select { width: 100%; padding: 8px 10px; border: 1px solid var(--border2); border-radius: var(--r); font-family: "DM Sans", sans-serif; font-size: 13px; background: var(--surface); color: var(--text); outline: none; resize: vertical; }
-    .fg input:focus, .fg textarea:focus { border-color: var(--accent); }
-    .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .mact { display: flex; gap: 10px; justify-content: flex-end; margin-top: 1.5rem; }
-    .sbtn { background: none; border: 1px solid var(--border2); border-radius: var(--r); padding: 8px 18px; font-family: "DM Sans", sans-serif; font-size: 13px; cursor: pointer; color: var(--text); }
-    .sbtn:hover { background: var(--surface2); }
-
-    /* ---------- Leistungs-Tag-Editor ---------- */
-    .ltag { display: inline-flex; align-items: center; gap: 5px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 3px 8px; font-size: 12px; color: var(--text2); }
-    .ltag button { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; line-height: 1; padding: 0; }
-    .ltag button:hover { color: var(--red); }
-
-    /* ---------- Upload Progress ---------- */
-    .uprog { font-size: 13px; color: var(--text2); text-align: center; padding: 8px; }
-
-    /* ---------- Empty State ---------- */
-    .empty { text-align: center; padding: 4rem 2rem; color: var(--text3); }
-    .empty .big { font-size: 32px; margin-bottom: 12px; }
-
-    /* ---------- Toast Notification ---------- */
-    .notify { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--accent); color: var(--accent-fg); border-radius: var(--r); padding: 10px 18px; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 999; opacity: 0; transform: translateY(8px); transition: all .2s; pointer-events: none; }
-    .notify.on { opacity: 1; transform: translateY(0); }
-
-    /* ---------- Responsive ---------- */
-    @media (max-width: 768px) {
-      .stats { grid-template-columns: 1fr 1fr; }
-      .main { padding: 1rem; }
-      .topbar { padding: 0 1rem; gap: 8px; }
-      .toolbar { gap: 6px; }
-      .toolbar input { width: 150px; }
+    /* App */
+    #app{display:none;}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+    .logo{font-size:18px;font-weight:600;letter-spacing:-.3px;}
+    .logo span{color:var(--text3);font-weight:300;}
+    .sp{flex:1;}
+    .user-name{font-size:12px;color:var(--text3);}
+    .tbtn{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:6px 14px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:6px;transition:background .12s;white-space:nowrap;}
+    .tbtn:hover{background:var(--surface2);}
+    .tbtn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+    .tbtn.pri:hover{opacity:.85;}
+    .main{padding:2rem;max-width:1400px;margin:0 auto;}
+    .tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:1.5rem;}
+    .tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 20px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);margin-bottom:-1px;transition:color .15s;}
+    .tab:hover{color:var(--text);}
+    .tab.on{color:var(--text);border-bottom-color:var(--accent);}
+    .tc{display:none;}
+    .tc.on{display:block;}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
+    .sc{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem 1.5rem;box-shadow:var(--sh);}
+    .sl{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+    .sv{font-size:28px;font-weight:600;letter-spacing:-.5px;}
+    .ss{font-size:11px;color:var(--text3);margin-top:3px;}
+    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
+    .toolbar input{padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none;width:200px;}
+    .toolbar input:focus{border-color:var(--accent);}
+    .toolbar select{padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none;cursor:pointer;}
+    .tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;}
+    .twrap{overflow-x:auto;}
+    table{width:100%;border-collapse:collapse;font-size:13px;}
+    thead th{background:var(--surface2);color:var(--text2);font-weight:500;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+    td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:#FAFAF8;}
+    .kname{font-weight:500;font-size:13px;min-width:160px;}
+    .kname small{font-weight:400;color:var(--text3);font-size:11px;display:block;margin-top:2px;font-family:"DM Mono",monospace;}
+    .tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:var(--text2);}
+    .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;}
+    .bok{background:var(--green-bg);color:var(--green);}
+    .bwarn{background:var(--amber-bg);color:var(--amber);}
+    .bdanger{background:var(--red-bg);color:var(--red);}
+    .binfo{background:var(--blue-bg);color:var(--blue);}
+    .ic{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 6px;border-radius:4px;font-size:13px;transition:color .1s,background .1s;}
+    .ic:hover{color:var(--text);background:var(--surface2);}
+    .ic.del:hover{color:var(--red);}
+    .edit{cursor:pointer;border-bottom:1px dashed var(--border2);padding-bottom:1px;}
+    .mwrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rl);background:var(--surface);}
+    .mtable{border-collapse:collapse;font-size:12px;min-width:100%;}
+    .mtable th{background:var(--surface2);padding:8px 12px;border:1px solid var(--border);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);white-space:nowrap;}
+    .mtable th.kc{min-width:180px;text-align:left;position:sticky;left:0;z-index:2;}
+    .mtable td{padding:8px 12px;border:1px solid var(--border);text-align:center;}
+    .mtable td.kn{text-align:left;font-weight:500;font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;}
+    .mtable td.kn small{display:block;font-weight:400;color:var(--text3);font-size:11px;}
+    .mchk{color:var(--green);font-size:15px;}
+    .mempty{color:var(--border2);}
+    .lfilter{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+    .ftag{background:var(--surface2);border:1px solid var(--border2);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--text2);transition:all .12s;}
+    .ftag.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+    .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:1rem;}
+    .mbg.on{display:flex;}
+    .modal{background:var(--surface);border-radius:var(--rl);padding:2rem;max-width:540px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.12);max-height:90vh;overflow-y:auto;}
+    .modal h3{font-size:17px;font-weight:600;margin-bottom:1.25rem;}
+    .fg{margin-bottom:14px;}
+    .fg label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px;display:block;}
+    .fg input,.fg textarea,.fg select{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none;resize:vertical;}
+    .fg input:focus,.fg textarea:focus{border-color:var(--accent);}
+    .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    .mact{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
+    .sbtn{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--text);}
+    .sbtn:hover{background:var(--surface2);}
+    .ltag{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2);}
+    .ltag button{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0;}
+    .ltag button:hover{color:var(--red);}
+    .uprog{font-size:13px;color:var(--text2);text-align:center;padding:8px;}
+    .empty{text-align:center;padding:4rem 2rem;color:var(--text3);}
+    .empty .big{font-size:32px;margin-bottom:12px;}
+    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--accent);color:var(--accent-fg);border-radius:var(--r);padding:10px 18px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+    .notify.on{opacity:1;transform:translateY(0);}
+    @media(max-width:768px){
+      .stats{grid-template-columns:1fr 1fr;}
+      .main{padding:1rem;}
+      .topbar{padding:0 1rem;gap:8px;}
+      .toolbar input{width:150px;}
     }
   </style>
 </head>
 <body>
 
-  <!-- ============================================================
-       SETUP SCREEN – shown on first visit
-       ============================================================ -->
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div style="font-size:36px;margin-bottom:12px">📊</div>
+    <h1>DealDesk</h1>
+    <p>Melde dich mit deinem Smile AI Account an.</p>
+    <button class="ms-btn" onclick="doMSLogin()">
+      <svg width="20" height="20" viewBox="0 0 21 21" fill="none">
+        <rect width="10" height="10" fill="#F25022"/>
+        <rect x="11" width="10" height="10" fill="#7FBA00"/>
+        <rect y="11" width="10" height="10" fill="#00A4EF"/>
+        <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+      </svg>
+      Mit Microsoft anmelden
+    </button>
+    <div class="login-err" id="login-err"></div>
+    <p class="login-hint">Nur für Smile AI Mitarbeitende</p>
+  </div>
+</div>
 
-  <!-- ============================================================
-       MAIN APP
-       ============================================================ -->
-<div id="app" style="display:block;">
+<!-- MAIN APP -->
+<div id="app">
+  <div class="topbar">
+    <div class="logo">Deal<span>Desk</span></div>
+    <div class="sp"></div>
+    <span class="user-name" id="user-name"></span>
+    <button class="tbtn" onclick="doSettings()">⚙ API Key</button>
+    <button class="tbtn" onclick="openAdd()">+ Manuell</button>
+    <label class="tbtn pri" style="cursor:pointer">
+      ↑ PDF hochladen
+      <input type="file" accept=".pdf" multiple style="display:none" onchange="doPDF(this)">
+    </label>
+    <button class="tbtn" onclick="doLogout()" title="Abmelden">↩</button>
+  </div>
 
-    <!-- Top Navigation Bar -->
-    <div class="topbar">
-      <div class="logo">Deal<span>Desk</span></div>
-      <div class="sp"></div>
-      <button class="tbtn" onclick="doSettings()">⚙ Key</button>
-      <button class="tbtn" onclick="openAdd()">+ Manuell</button>
-      <label class="tbtn pri" style="cursor:pointer">
-        ↑ PDF hochladen
-        <input type="file" accept=".pdf" multiple style="display:none" onchange="doPDF(this)">
-      </label>
+  <div class="main">
+    <div class="tabs">
+      <button class="tab on" onclick="doTab('liste')">Kundenübersicht</button>
+      <button class="tab" onclick="doTab('matrix')">Leistungsmatrix</button>
     </div>
 
-    <div class="main">
-
-      <!-- Tab Navigation -->
-      <div class="tabs">
-        <button class="tab on" onclick="doTab('liste')">Kundenübersicht</button>
-        <button class="tab" onclick="doTab('matrix')">Leistungsmatrix</button>
+    <div id="tc-liste" class="tc on">
+      <div class="stats">
+        <div class="sc"><div class="sl">Kunden</div><div class="sv" id="s1">—</div></div>
+        <div class="sc"><div class="sl">Leistungen</div><div class="sv" id="s2">—</div></div>
+        <div class="sc"><div class="sl">Bald ablaufend</div><div class="sv" id="s3" style="color:var(--amber)">—</div><div class="ss">≤ 90 Tage</div></div>
+        <div class="sc"><div class="sl">Jahres-Invest</div><div class="sv" id="s4">—</div></div>
       </div>
-
-      <!-- TAB: Kundenübersicht -->
-      <div id="tc-liste" class="tc on">
-
-        <!-- Stats Row -->
-        <div class="stats">
-          <div class="sc"><div class="sl">Kunden</div><div class="sv" id="s1">—</div></div>
-          <div class="sc"><div class="sl">Leistungen</div><div class="sv" id="s2">—</div></div>
-          <div class="sc"><div class="sl">Bald ablaufend</div><div class="sv" id="s3" style="color:var(--amber)">—</div><div class="ss">≤ 90 Tage</div></div>
-          <div class="sc"><div class="sl">Jahres-Invest</div><div class="sv" id="s4">—</div></div>
-        </div>
-
-        <!-- Filter / Sort Toolbar -->
-        <div class="toolbar">
-          <input type="text" id="qsearch" placeholder="🔍 Kunde suchen..." oninput="doRender()">
-          <select id="qstatus" onchange="doRender()">
-            <option value="">Alle Status</option>
-            <option>Aktiv</option>
-            <option>Läuft bald ab</option>
-            <option>Abgelaufen</option>
-            <option>Unbekannt</option>
-          </select>
-          <select id="qsort" onchange="doRender()">
-            <option value="kunde">Sortierung: Kunde A–Z</option>
-            <option value="ende">Sortierung: Vertragsende</option>
-            <option value="invest">Sortierung: Invest ↓</option>
-          </select>
-          <div class="sp"></div>
-          <button class="tbtn" onclick="doCSV()">↓ CSV Export</button>
-        </div>
-
-        <!-- Customer Table -->
-        <div class="tcard"><div class="twrap">
-          <table>
-            <thead><tr>
-              <th>Kunde</th>
-              <th>Leistungen</th>
-              <th>Angebotsdatum</th>
-              <th>Vertragsbeginn</th>
-              <th>Laufzeit</th>
-              <th>Vertragsende</th>
-              <th>Invest</th>
-              <th>Status</th>
-              <th></th>
-            </tr></thead>
-            <tbody id="tbody"></tbody>
-          </table>
-        </div></div>
+      <div class="toolbar">
+        <input type="text" id="qsearch" placeholder="🔍 Kunde suchen..." oninput="doRender()">
+        <select id="qstatus" onchange="doRender()">
+          <option value="">Alle Status</option>
+          <option>Aktiv</option><option>Läuft bald ab</option>
+          <option>Abgelaufen</option><option>Unbekannt</option>
+        </select>
+        <select id="qsort" onchange="doRender()">
+          <option value="kunde">Sortierung: Kunde A–Z</option>
+          <option value="ende">Sortierung: Vertragsende</option>
+          <option value="invest">Sortierung: Invest ↓</option>
+        </select>
+        <div class="sp"></div>
+        <button class="tbtn" onclick="doCSV()">↓ CSV Export</button>
       </div>
+      <div class="tcard"><div class="twrap">
+        <table>
+          <thead><tr>
+            <th>Kunde</th><th>Leistungen</th><th>Angebotsdatum</th>
+            <th>Vertragsbeginn</th><th>Laufzeit</th><th>Vertragsende</th>
+            <th>Invest</th><th>Status</th><th></th>
+          </tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div></div>
+    </div>
 
-      <!-- TAB: Leistungsmatrix -->
-      <div id="tc-matrix" class="tc">
-        <div class="lfilter" id="lfilter"></div>
-        <div class="mwrap">
-          <table class="mtable">
-            <thead id="mhead"></thead>
-            <tbody id="mbody"></tbody>
-          </table>
-        </div>
-      </div>
-
-    </div><!-- /.main -->
-  </div><!-- /#app -->
-
-  <!-- ============================================================
-       MODAL: PDF Upload Progress
-       ============================================================ -->
-  <div class="mbg" id="upmodal">
-    <div class="modal">
-      <h3>PDF wird analysiert</h3>
-      <div class="uprog" id="uprog">Lese PDF...</div>
-      <div style="margin-top:1rem;background:var(--surface2);border-radius:var(--r);height:4px;overflow:hidden">
-        <div id="ubar" style="height:100%;background:var(--accent);width:0%;transition:width .3s"></div>
+    <div id="tc-matrix" class="tc">
+      <div class="lfilter" id="lfilter"></div>
+      <div class="mwrap">
+        <table class="mtable">
+          <thead id="mhead"></thead>
+          <tbody id="mbody"></tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- ============================================================
-       MODAL: Add / Edit Customer
-       ============================================================ -->
-  <div class="mbg" id="fmodal">
-    <div class="modal">
-      <h3 id="ftitle">Kunde hinzufügen</h3>
-      <input type="hidden" id="fid">
-
-      <div class="fg">
-        <label>Kundenname *</label>
-        <input type="text" id="fkunde" placeholder="z.B. Muster GmbH">
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>Angebotsnummer</label>
-          <input type="text" id="fnr" placeholder="MUS-001-2026">
-        </div>
-        <div class="fg">
-          <label>Angebotsdatum</label>
-          <input type="text" id="fdatum" placeholder="TT.MM.JJJJ">
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>Vertragsbeginn</label>
-          <input type="text" id="fbeginn" placeholder="01.01.2026">
-        </div>
-        <div class="fg">
-          <label>Laufzeit</label>
-          <select id="flaufzeit">
-            <option value="12 Monate">12 Monate</option>
-            <option value="24 Monate">24 Monate</option>
-            <option value="36 Monate">36 Monate</option>
-            <option value="6 Monate">6 Monate</option>
-          </select>
-        </div>
-      </div>
-      <div class="frow">
-        <div class="fg">
-          <label>Vertragsende</label>
-          <input type="date" id="fende">
-        </div>
-        <div class="fg">
-          <label>Finaler Invest (€)</label>
-          <input type="number" id="finvest" placeholder="75000">
-        </div>
-      </div>
-
-      <!-- Tag-based Leistungen editor -->
-      <div class="fg">
-        <label>Leistungen</label>
-        <div id="ltags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px"></div>
-        <div style="display:flex;gap:6px">
-          <input type="text" id="lnew" placeholder="Leistung hinzufügen..."
-            style="flex:1;padding:6px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none"
-            onkeydown="if(event.key==='Enter'){event.preventDefault();addLeistung()}">
-          <button type="button" class="sbtn" onclick="addLeistung()" style="padding:6px 12px;font-size:13px">+ Add</button>
-        </div>
-        <textarea id="fleistungen" style="display:none"></textarea>
-      </div>
-
-      <div class="fg">
-        <label>Notiz</label>
-        <input type="text" id="fnotiz" placeholder="Optionale Zusatzinfo">
-      </div>
-
-      <div class="mact">
-        <button class="sbtn" onclick="closeModal()">Abbrechen</button>
-        <button class="btn" style="width:auto" onclick="doSave()">Speichern</button>
-      </div>
+<!-- MODAL: Upload Progress -->
+<div class="mbg" id="upmodal">
+  <div class="modal">
+    <h3>PDF wird analysiert</h3>
+    <div class="uprog" id="uprog">Lese PDF...</div>
+    <div style="margin-top:1rem;background:var(--surface2);border-radius:var(--r);height:4px;overflow:hidden">
+      <div id="ubar" style="height:100%;background:var(--accent);width:0%;transition:width .3s"></div>
     </div>
   </div>
+</div>
 
-  <!-- Toast Notification -->
-  <div class="notify" id="notify"></div>
+<!-- MODAL: Add / Edit -->
+<div class="mbg" id="fmodal">
+  <div class="modal">
+    <h3 id="ftitle">Kunde hinzufügen</h3>
+    <input type="hidden" id="fid">
+    <div class="fg"><label>Kundenname *</label><input type="text" id="fkunde" placeholder="z.B. Muster GmbH"></div>
+    <div class="frow">
+      <div class="fg"><label>Angebotsnummer</label><input type="text" id="fnr" placeholder="MUS-001-2026"></div>
+      <div class="fg"><label>Angebotsdatum</label><input type="text" id="fdatum" placeholder="TT.MM.JJJJ"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Vertragsbeginn</label><input type="text" id="fbeginn" placeholder="01.01.2026"></div>
+      <div class="fg"><label>Laufzeit</label>
+        <select id="flaufzeit">
+          <option value="12 Monate">12 Monate</option>
+          <option value="24 Monate">24 Monate</option>
+          <option value="36 Monate">36 Monate</option>
+          <option value="6 Monate">6 Monate</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Vertragsende</label><input type="date" id="fende"></div>
+      <div class="fg"><label>Finaler Invest (€)</label><input type="number" id="finvest" placeholder="75000"></div>
+    </div>
+    <div class="fg">
+      <label>Leistungen</label>
+      <div id="ltags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px"></div>
+      <div style="display:flex;gap:6px">
+        <input type="text" id="lnew" placeholder="Leistung hinzufügen..."
+          style="flex:1;padding:6px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none"
+          onkeydown="if(event.key==='Enter'){event.preventDefault();addLeistung()}">
+        <button type="button" class="sbtn" onclick="addLeistung()" style="padding:6px 12px;font-size:13px">+ Add</button>
+      </div>
+      <textarea id="fleistungen" style="display:none"></textarea>
+    </div>
+    <div class="fg"><label>Notiz</label><input type="text" id="fnotiz" placeholder="Optionale Zusatzinfo"></div>
+    <div class="mact">
+      <button class="sbtn" onclick="closeModal()">Abbrechen</button>
+      <button class="btn" style="width:auto" onclick="doSave()">Speichern</button>
+    </div>
+  </div>
+</div>
 
-  <!-- ============================================================
-       JAVASCRIPT
-       ============================================================ -->
-  <script>
-    /* ---------------------------------------------------------------
-       State
-    --------------------------------------------------------------- */
-    var SB = null, DATA = [], FILTER = 'alle';
+<div class="notify" id="notify"></div>
 
-    /* ---------------------------------------------------------------
-       Utility helpers
-    --------------------------------------------------------------- */
-    function ls(k) { return localStorage.getItem(k); }
-    function lss(k, v) { localStorage.setItem(k, v); }
-    function gi(id) { return document.getElementById(id); }
-    function gv(id) { return gi(id).value.trim(); }
+<script>
+  /* ── Config ── */
+  var SUPABASE_URL = 'https://exsrtfiocqleaqqvcffq.supabase.co';
+  var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3J0ZmlvY3FsZWFxcXZjZmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTE1ODQsImV4cCI6MjA4OTg2NzU4NH0.Oy7eEu4bkO9n3U6PbCPhEFOp4BjHXSeDNgVCa6AWSQ8';
+  var CLIENT_ID = 'a917e360-e8fa-4b2c-9c52-4b4f3de30022';
+  var TENANT_ID = '645a8199-b652-44c7-903a-9f33740ce3dd';
+  var REDIRECT_URI = 'https://ep-sai.github.io/dealdesk/';
 
-    function fmtD(iso) {
-      if (!iso) return '—';
-      return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
-    function fmtE(v) { if (!v) return '—'; return Number(v).toLocaleString('de-DE') + ' €'; }
+  /* ── State ── */
+  var SB = null, DATA = [], FILTER = 'alle';
 
-    /* ---------------------------------------------------------------
-       Invest display helper (with optional strikethrough + discount)
-    --------------------------------------------------------------- */
-    function buildInvest(r) {
-      var rhythmus = r.invest_rhythmus === 'monatlich' ? 'mtl.' : 'p.a.';
-      var final = r.invest_final || r.invest;
-      var brutto = r.invest_brutto;
-      if (!final && !brutto) return '—';
-      var finalAmt = final || brutto;
-      var html = '';
-      if (brutto && r.invest_rabatt_prozent && brutto !== finalAmt) {
-        var bruttoLbl = r.invest_brutto_label || fmtE(brutto);
-        html += '<span style="font-size:11px;color:var(--text3);text-decoration:line-through">' + bruttoLbl + '</span>';
-        html += ' <span style="font-size:11px;color:var(--green);font-weight:500">-' + r.invest_rabatt_prozent + '%</span><br>';
-      }
-      var finalLbl = r.invest_final_label || r.invest_label || fmtE(finalAmt);
-      html += '<span style="font-weight:600">' + finalLbl + '</span>';
-      html += ' <span style="font-size:10px;color:var(--text3)">' + rhythmus + '</span>';
-      return html;
-    }
+  /* ── Helpers ── */
+  function ls(k) { return localStorage.getItem(k); }
+  function lss(k, v) { localStorage.setItem(k, v); }
+  function gi(id) { return document.getElementById(id); }
+  function gv(id) { return gi(id).value.trim(); }
+  function fmtD(iso) { if (!iso) return '—'; return new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); }
+  function fmtE(v) { if (!v) return '—'; return Number(v).toLocaleString('de-DE') + ' €'; }
 
-    /* ---------------------------------------------------------------
-       Status badge helper
-    --------------------------------------------------------------- */
-    function status(r) {
-      if (!r.vertragsende_iso) return { t: 'Unbekannt', c: 'binfo' };
-      var d = (new Date(r.vertragsende_iso) - new Date()) / 86400000;
-      if (d < 0) return { t: 'Abgelaufen', c: 'bdanger' };
-      if (d <= 90) return { t: 'Läuft bald ab', c: 'bwarn' };
-      return { t: 'Aktiv', c: 'bok' };
-    }
-
-    /* ---------------------------------------------------------------
-       App initialisation
-    --------------------------------------------------------------- */
-const SUPABASE_URL = 'https://exsrtfiocqleaqqvcffq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3J0ZmlvY3FsZWFxcXZjZmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTE1ODQsImV4cCI6MjA4OTg2NzU4NH0.Oy7eEu4bkO9n3U6PbCPhEFOp4BjHXSeDNgVCa6AWSQ8';
-
-window.addEventListener('load', function () {
-  doInit(SUPABASE_URL, SUPABASE_KEY).catch(function (e) {
-    console.error(e);
-    alert('Verbindung zu Supabase fehlgeschlagen: ' + e.message);
+  /* ── Microsoft Login ── */
+  var msalInstance = new msal.PublicClientApplication({
+    auth: { clientId: CLIENT_ID, authority: 'https://login.microsoftonline.com/' + TENANT_ID, redirectUri: REDIRECT_URI },
+    cache: { cacheLocation: 'localStorage', storeAuthStateInCookie: false }
   });
-});
 
-async function doConnect() {
-  return;
-}
-
-    async function doInit(u, k) {
-      SB = window.supabase.createClient(u, k);
-      var r = await SB.from('kunden').select('id').limit(1);
-      if (r.error) throw new Error(r.error.message);
-if (gi('app')) gi('app').style.display = 'block';
-      await doLoad();
-    }
-
-    /* ---------------------------------------------------------------
-       Data loading
-    --------------------------------------------------------------- */
-    async function doLoad() {
-      var r = await SB.from('kunden').select('*').order('created_at', { ascending: false });
-      if (r.error) { toast('Fehler: ' + r.error.message); return; }
-      DATA = r.data || [];
-      doRender();
-      doStats();
-    }
-
-    /* ---------------------------------------------------------------
-       Table rendering
-    --------------------------------------------------------------- */
-    function doRender() {
-      var q = (gv('qsearch') || '').toLowerCase();
-      var fs = gi('qstatus').value;
-      var sc = gi('qsort').value;
-
-      var rows = DATA.filter(function (r) {
-        if (q && !r.kunde.toLowerCase().includes(q)) return false;
-        if (fs && status(r).t !== fs) return false;
-        return true;
-      });
-
-      rows.sort(function (a, b) {
-        if (sc === 'kunde') return a.kunde.localeCompare(b.kunde, 'de');
-        if (sc === 'ende') return (a.vertragsende_iso || '9999').localeCompare(b.vertragsende_iso || '9999');
-        if (sc === 'invest') return (b.invest_final || b.invest || 0) - (a.invest_final || a.invest || 0);
-        return 0;
-      });
-
-      var tb = gi('tbody');
-      if (!rows.length) {
-        tb.innerHTML = '<tr><td colspan="9"><div class="empty"><div class="big">📋</div><p>Noch keine Kunden. PDF hochladen oder manuell hinzufügen.</p></div></td></tr>';
-        return;
+  msalInstance.handleRedirectPromise().then(function(response) {
+    if (response && response.account) {
+      lss('ms_user', JSON.stringify({ name: response.account.name, email: response.account.username }));
+      showApp();
+    } else {
+      var accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        showApp();
+      } else {
+        gi('login-screen').style.display = 'flex';
       }
-
-      tb.innerHTML = rows.map(function (r) {
-        var st = status(r);
-        var tags = (r.leistungen || []).map(function (l) { return '<span class="tag">' + l + '</span>'; }).join('');
-        var verl = r.verlaengerung ? '<span style="font-size:11px;color:var(--text3);display:block;margin-top:2px">+' + r.verlaengerung + ' Auto</span>' : '';
-        return '<tr>' +
-          '<td class="kname">' + r.kunde + '<small>' + (r.angebotsnr || '') + '</small></td>' +
-          '<td>' + (tags || '<span style="color:var(--text3)">—</span>') + '</td>' +
-          '<td style="white-space:nowrap;font-size:12px;color:var(--text2)">' + (r.angebotsdatum || '—') + '</td>' +
-          '<td><span class="edit" data-id="' + r.id + '" onclick="doBeginn(this)">' + (r.vertragsbeginn || '— klicken') + '</span></td>' +
-          '<td>' + (r.laufzeit || '—') + verl + '</td>' +
-          '<td style="white-space:nowrap">' + (r.vertragsende_iso ? fmtD(r.vertragsende_iso) : '—') + '</td>' +
-          '<td style="white-space:nowrap">' + buildInvest(r) + '</td>' +
-          '<td><span class="badge ' + st.c + '">' + st.t + '</span></td>' +
-          '<td style="white-space:nowrap">' +
-            '<button class="ic" data-id="' + r.id + '" onclick="openEdit(this.dataset.id)">✏️</button>' +
-            '<button class="ic del" data-id="' + r.id + '" onclick="doDelete(this.dataset.id)">🗑</button>' +
-          '</td></tr>';
-      }).join('');
     }
+  }).catch(function(e) {
+    gi('login-screen').style.display = 'flex';
+    gi('login-err').textContent = 'Login fehlgeschlagen: ' + e.message;
+  });
 
-    /* ---------------------------------------------------------------
-       Stats update
-    --------------------------------------------------------------- */
-    function doStats() {
-      gi('s1').textContent = new Set(DATA.map(function (r) { return r.kunde; })).size;
-      gi('s2').textContent = DATA.reduce(function (a, r) { return a + (r.leistungen || []).length; }, 0);
-      gi('s3').textContent = DATA.filter(function (r) { return status(r).t === 'Läuft bald ab'; }).length;
-      var t = DATA.reduce(function (a, r) { return a + (Number(r.invest_final || r.invest) || 0); }, 0);
-      gi('s4').textContent = t > 0 ? t.toLocaleString('de-DE') + ' €' : '—';
-    }
+  function doMSLogin() { msalInstance.loginRedirect({ scopes: ['User.Read'] }); }
 
-    /* ---------------------------------------------------------------
-       Tab switching
-    --------------------------------------------------------------- */
-    function doTab(tab) {
-      document.querySelectorAll('.tab').forEach(function (b, i) {
-        b.classList.toggle('on', (tab === 'liste' && i === 0) || (tab === 'matrix' && i === 1));
-      });
-      gi('tc-liste').classList.toggle('on', tab === 'liste');
-      gi('tc-matrix').classList.toggle('on', tab === 'matrix');
-      if (tab === 'matrix') doMatrix();
-    }
-
-    /* ---------------------------------------------------------------
-       Leistungsmatrix
-    --------------------------------------------------------------- */
-    function doMatrix() {
-      var allL = [...new Set(DATA.flatMap(function (r) { return r.leistungen || []; }))].sort();
-      var fd = gi('lfilter');
-      var fh = '<span style="font-size:12px;color:var(--text2)">Filter:</span>';
-      fh += '<button class="ftag' + (FILTER === 'alle' ? ' on' : '') + '" data-f="alle" onclick="setFilter(this)">Alle</button>';
-      allL.forEach(function (l) {
-        fh += '<button class="ftag' + (FILTER === l ? ' on' : '') + '" data-f="' + l.replace(/"/g, '&quot;') + '" onclick="setFilter(this)">' + l + '</button>';
-      });
-      fd.innerHTML = fh;
-
-      var showL = FILTER === 'alle' ? allL : [FILTER];
-      var showK = FILTER === 'alle' ? DATA : DATA.filter(function (r) { return (r.leistungen || []).includes(FILTER); });
-
-      var thead = '<tr><th class="kc">Kunde</th>';
-      showL.forEach(function (l) { thead += '<th style="max-width:110px;white-space:normal;text-align:center">' + l + '</th>'; });
-      thead += '<th>Laufzeit</th><th>Vertragsende</th><th>Invest</th></tr>';
-      gi('mhead').innerHTML = thead;
-
-      var tbody = '';
-      showK.forEach(function (r) {
-        tbody += '<tr><td class="kn">' + r.kunde + '<small>' + (r.angebotsnr || '') + '</small></td>';
-        showL.forEach(function (l) {
-          tbody += '<td>' + ((r.leistungen || []).includes(l) ? '<span class="mchk">✓</span>' : '<span class="mempty">·</span>') + '</td>';
-        });
-        tbody += '<td style="font-size:12px;white-space:nowrap">' + (r.laufzeit || '—') + '</td>';
-        tbody += '<td style="font-size:12px;white-space:nowrap">' + (r.vertragsende_iso ? fmtD(r.vertragsende_iso) : '—') + '</td>';
-        tbody += '<td style="font-size:12px;white-space:nowrap">' + buildInvest(r) + '</td></tr>';
-      });
-      gi('mbody').innerHTML = tbody;
-    }
-
-    function setFilter(el) {
-      FILTER = el.dataset.f;
-      doMatrix();
-    }
-
-    /* ---------------------------------------------------------------
-       Inline Vertragsbeginn edit
-    --------------------------------------------------------------- */
-    async function doBeginn(el) {
-      var id = el.dataset.id;
-      var cur = el.textContent === '— klicken' ? '' : el.textContent;
-      var val = prompt('Vertragsbeginn (TT.MM.JJJJ):', cur);
-      if (val === null) return;
-      var t = val.trim();
-      var r = DATA.find(function (x) { return x.id === id; });
-      var ende = null;
-      var dp = t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
-      if (dp) {
-        var d = new Date(parseInt(dp[3]), parseInt(dp[2]) - 1, parseInt(dp[1]));
-        d.setMonth(d.getMonth() + (r.laufzeit_monate || 12));
-        ende = d.toISOString().slice(0, 10);
-      }
-      var res = await SB.from('kunden').update({ vertragsbeginn: t, vertragsende_iso: ende }).eq('id', id);
-      if (res.error) { toast('Fehler: ' + res.error.message); return; }
-      await doLoad();
-      toast(ende ? '✓ Gespeichert – Vertragsende: ' + fmtD(ende) : '✓ Gespeichert');
-    }
-
-    /* ---------------------------------------------------------------
-       PDF Upload & AI Extraction
-    --------------------------------------------------------------- */
-    async function doPDF(input) {
-      var files = Array.from(input.files);
-      if (!files.length) return;
-      input.value = '';
-      gi('upmodal').classList.add('on');
-
-      for (var i = 0; i < files.length; i++) {
-        setP('Analysiere: ' + files[i].name, (i / files.length) * 100);
-        try {
-          var b64 = await toB64(files[i]);
-          var parsed = await doExtract(b64);
-          if (parsed) {
-            var row = {
-              kunde: parsed.kunde,
-              angebotsnr: parsed.angebotsnr,
-              angebotsdatum: parsed.angebotsdatum,
-              vertragsbeginn: parsed.vertragsbeginn,
-              laufzeit: parsed.laufzeit,
-              laufzeit_monate: parsed.laufzeit_monate || 12,
-              verlaengerung: parsed.verlaengerung || '12 Monate',
-              vertragsende_iso: parsed.vertragsende_iso || null,
-              invest_brutto: parsed.invest_brutto || null,
-              invest_brutto_label: parsed.invest_brutto_label || null,
-              invest_rabatt_prozent: parsed.invest_rabatt_prozent || null,
-              invest_final: parsed.invest_final || null,
-              invest_final_label: parsed.invest_final_label || null,
-              invest_rhythmus: parsed.invest_rhythmus || 'jaehrlich',
-              invest: parsed.invest_final || parsed.invest || null,
-              invest_label: parsed.invest_final_label || parsed.invest_label || null,
-              leistungen: parsed.leistungen || [],
-              notiz: parsed.notiz || ''
-            };
-            var ins = await SB.from('kunden').insert([row]);
-            if (ins.error) throw new Error(ins.error.message);
-            await doLoad();
-            toast('✓ ' + parsed.kunde + ' hinzugefügt');
-          }
-        } catch (e) { toast('Fehler: ' + e.message); }
-      }
-      setP('Fertig', 100);
-      setTimeout(function () { gi('upmodal').classList.remove('on'); }, 800);
-    }
-
-    function setP(t, p) { gi('uprog').textContent = t; gi('ubar').style.width = p + '%'; }
-
-    function toB64(file) {
-      return new Promise(function (res, rej) {
-        var r = new FileReader();
-        r.onload = function () { res(r.result.split(',')[1]); };
-        r.onerror = function () { rej(new Error('Datei konnte nicht gelesen werden')); };
-        r.readAsDataURL(file);
-      });
-    }
-
-    /* ---------------------------------------------------------------
-       AI Extraction via OpenAI GPT-4o
-    --------------------------------------------------------------- */
-    async function doExtract(b64) {
-  var apiKey = ls('ai_key');
-  if (!apiKey) throw new Error('Kein API Key. Bitte unter ⚙ Key eintragen.');
-
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  var pdfData = atob(b64), pdfBytes = new Uint8Array(pdfData.length);
-  for (var i = 0; i < pdfData.length; i++) pdfBytes[i] = pdfData.charCodeAt(i);
-  var pdf = await pdfjsLib.getDocument({ data: pdfBytes }).promise;
-
-  // Extract full raw text from all pages (max 3) with line structure preserved
-  var allText = '';
-  var pagesToRead = Math.min(pdf.numPages, 3);
-  for (var p = 1; p <= pagesToRead; p++) {
-    var page = await pdf.getPage(p);
-    var tc = await page.getTextContent();
-    // Preserve line structure by grouping items with similar Y positions
-    var lineMap = {};
-    tc.items.forEach(function(it) {
-      if (!it.str.trim()) return;
-      var y = Math.round(it.transform[5] / 6) * 6;
-      lineMap[y] = (lineMap[y] || '') + ' ' + it.str.trim();
-    });
-    var pageLines = Object.keys(lineMap)
-      .map(Number).sort(function(a,b){return b-a;})
-      .map(function(y){ return lineMap[y].trim(); })
-      .filter(function(l){ return l.length > 0; });
-    allText += '\n=== SEITE ' + p + ' ===\n' + pageLines.join('\n');
+  function doLogout() {
+    localStorage.removeItem('ms_user');
+    msalInstance.logoutRedirect();
   }
 
-  var prompt = 'Du analysierst ein Smile AI Angebotsdokument.\n' +
-    'Antworte NUR mit validem JSON. Kein Markdown. Nur Werte die explizit im Text stehen.\n\n' +
-    'TEXT (zeilenweise):\n' + allText.slice(0, 12000) + '\n\n' +
-    'WICHTIGE REGELN:\n\n' +
-    '1. KUNDE: Suche nach "Angebotsempfaenger:" ODER "Angebot fuer:" ODER "Angebot für:". ' +
-    'Extrahiere nur den Firmennamen darunter/dahinter. Niemals "Smile AI GmbH", "Dr. Kaske GmbH" oder den Absender.\n\n' +
-    '2. ANGEBOTSNR & DATUM: Stehen meist in einer Zeile wie "Angebotsnummer: XXX, Angebotsdatum: TT.MM.JJJJ". Exakt kopieren.\n\n' +
-    '3. LEISTUNGEN - Das ist der kritischste Punkt:\n' +
-    'Die Modulnamen stehen in der LINKEN SPALTE der Tabelle, oft ueber mehrere Zeilen verteilt oder mit anderen Woertern vermischt.\n' +
-    'Suche nach diesen BEKANNTEN MUSTERN im Text und gib sie exakt zurueck:\n' +
-    '- "E-Commerce To dos & Handlungsempfehlungen" oder "E-Commerce To do\'s & Handlungsempfehlungen"\n' +
-    '- "Einbindung der Texte in Versandapotheken"\n' +
-    '- "Markenanalyse" oder "Marken- analyse"\n' +
-    '- "ROAS Tracking"\n' +
-    '- "Dashboard & Datenintegration"\n' +
-    '- "Human Powered Insights" (auch wenn als "Human" + "Powered Insights" getrennt)\n' +
-    '- "Smile Analytics Base" (auch wenn als "Smile" + "Analytics Base" getrennt)\n' +
-    '- "Smile Analytics Deep Dives" (auch wenn als "Smile" + "Analytics" + "Deep Dives" getrennt)\n' +
-    '- "Smile Retail Media onsite" (auch wenn als "Smile" + "Retail Media" + "onsite" getrennt)\n' +
-    '- "Smile Deep Dive Amazon" (auch wenn als "Smile" + "Deep" + "Dive Amazon" getrennt)\n' +
-    '- "Smile Insights+ Knowledge Hub" (auch wenn als "Smile Insights+" + "Knowledge Hub" getrennt)\n' +
-    '- "Retail Media Proof of Performance"\n' +
-    '- "Smile Analyze" oder "Smile Analytics"\n' +
-    '- "Smile Analytics User"\n' +
-    '- "Deep Dive Retail Media"\n' +
-    '- "CSM"\n' +
-    '- "Market add on Austria" oder "Market Add-on Austria"\n' +
-    '- "Deep Dive Amazon"\n' +
-    '- "Shop Crawling"\n' +
-    '- "Workshop 2025 mit Full Data Access"\n' +
-    '- "Workshop Amazon App Deep Dive"\n' +
-    'Wenn ein Name im Text vorkommt (auch aufgeteilt), nimm ihn auf. ' +
-    'Gib den Namen EXAKT so zurueck wie er im obigen Text steht - nicht normalisieren.\n\n' +
-    '4. INVEST - Suche am Ende des Dokuments (kurz vor oder nach "Details:") nach ALLEN Zeilen die einen Euro-Betrag enthalten:\n' +
-    '- Es gibt immer eine LETZTE/KLEINSTE Zahl = finaler Invest nach Rabatten -> invest_final\n' +
-    '- Falls mehrere Invest-Zeilen: ERSTE/GROESSTE = Brutto vor Rabatt -> invest_brutto\n' +
-    '- Falls nur eine Zeile: invest_brutto = invest_final, kein Rabatt\n' +
-    '- invest_rabatt_prozent: Falls Brutto != Final: ((brutto-final)/brutto*100) auf 1 Stelle runden. Sonst null.\n' +
-    '- invest_rhythmus: "monatlich" wenn "Monats-Invest" oder "monatlich" im Kontext, sonst "jaehrlich"\n' +
-    '- invest_brutto_label und invest_final_label: NUR Betrag + "EUR/Monat" oder "EUR/Jahr" - KEIN langer Beschreibungstext\n\n' +
-    '5. LAUFZEIT: Aus "Laufzeit von X Monaten" oder "bei X Monaten Laufzeit".\n\n' +
-    '6. VERTRAGSBEGINN: Aus "Laufzeit des Vertrages beginnt..." oder explizitem Datum.\n\n' +
-    '{"kunde":"","angebotsnr":"","angebotsdatum":"","vertragsbeginn":"","laufzeit":"","laufzeit_monate":12,' +
-    '"verlaengerung":"12 Monate","vertragsende_iso":null,"leistungen":[],' +
-    '"invest_brutto":0,"invest_brutto_label":"","invest_rabatt_prozent":null,' +
-    '"invest_final":0,"invest_final_label":"","invest_rhythmus":"jaehrlich","notiz":""}';
-
-  var resp = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
-    body: JSON.stringify({ model: 'gpt-4o', max_tokens: 1200,
-      messages: [{ role: 'user', content: prompt }] })
-  });
-  if (!resp.ok) {
-    var e = await resp.json().catch(function() { return {}; });
-    throw new Error(e.error && e.error.message ? e.error.message : 'OpenAI Fehler ' + resp.status);
+  function showApp() {
+    gi('login-screen').style.display = 'none';
+    gi('app').style.display = 'block';
+    var u = ls('ms_user');
+    if (u) { try { var parsed = JSON.parse(u); gi('user-name').textContent = '● ' + (parsed.name || parsed.email); } catch(e){} }
+    doInit();
   }
-  var j = await resp.json();
-  var txt = (j.choices && j.choices[0] && j.choices[0].message && j.choices[0].message.content) || '';
-  var clean = txt.replace(/```json|```/g, '').trim();
-  try { return JSON.parse(clean); }
-  catch(e) { throw new Error('GPT Antwort ungueltig: ' + clean.slice(0, 150)); }
-}
 
-    /* ---------------------------------------------------------------
-       Leistungen Tag Editor
-    --------------------------------------------------------------- */
-    function renderLTags() {
-      var tags = getLeistungen();
-      gi('ltags').innerHTML = tags.map(function (l, i) {
-        return '<span class="ltag">' + l + '<button onclick="removeLeistung(' + i + ')" title="Entfernen">×</button></span>';
-      }).join('');
-    }
-    function getLeistungen() {
-      var raw = gi('fleistungen').value;
-      return raw ? raw.split('\n').map(function (s) { return s.trim(); }).filter(Boolean) : [];
-    }
-    function setLeistungen(arr) {
-      gi('fleistungen').value = arr.join('\n');
-      renderLTags();
-    }
-    function addLeistung() {
-      var inp = gi('lnew'), val = inp.value.trim();
-      if (!val) return;
-      var arr = getLeistungen();
-      if (!arr.includes(val)) { arr.push(val); setLeistungen(arr); }
-      inp.value = '';
-    }
-    function removeLeistung(idx) {
-      var arr = getLeistungen(); arr.splice(idx, 1); setLeistungen(arr);
-    }
+  /* ── Supabase Init ── */
+  async function doInit() {
+    SB = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    await doLoad();
+  }
 
-    /* ---------------------------------------------------------------
-       Modal: Add / Edit
-    --------------------------------------------------------------- */
-    function openAdd() {
-      gi('ftitle').textContent = 'Kunde hinzufügen';
-      gi('fid').value = '';
-      ['fkunde','fnr','fdatum','fbeginn','finvest','fnotiz'].forEach(function (id) { gi(id).value = ''; });
-      gi('fende').value = '';
-      setLeistungen([]);
-      gi('fmodal').classList.add('on');
+  /* ── Data ── */
+  async function doLoad() {
+    var r = await SB.from('kunden').select('*').order('created_at', { ascending: false });
+    if (r.error) { toast('Fehler: ' + r.error.message); return; }
+    DATA = r.data || [];
+    doRender(); doStats();
+  }
+
+  /* ── Invest Display ── */
+  function buildInvest(r) {
+    var rhythmus = r.invest_rhythmus === 'monatlich' ? 'mtl.' : 'p.a.';
+    var final = r.invest_final || r.invest;
+    var brutto = r.invest_brutto;
+    if (!final && !brutto) return '—';
+    var finalAmt = final || brutto;
+    var html = '';
+    if (brutto && r.invest_rabatt_prozent && brutto !== finalAmt) {
+      html += '<span style="font-size:11px;color:var(--text3);text-decoration:line-through">' + (r.invest_brutto_label || fmtE(brutto)) + '</span>';
+      html += ' <span style="font-size:11px;color:var(--green);font-weight:500">-' + r.invest_rabatt_prozent + '%</span><br>';
     }
+    html += '<span style="font-weight:600">' + (r.invest_final_label || r.invest_label || fmtE(finalAmt)) + '</span>';
+    html += ' <span style="font-size:10px;color:var(--text3)">' + rhythmus + '</span>';
+    return html;
+  }
 
-    function openEdit(id) {
-      var r = DATA.find(function (x) { return x.id === id; });
-      if (!r) return;
-      gi('ftitle').textContent = 'Eintrag bearbeiten';
-      gi('fid').value = id;
-      gi('fkunde').value = r.kunde || '';
-      gi('fnr').value = r.angebotsnr || '';
-      gi('fdatum').value = r.angebotsdatum || '';
-      gi('fbeginn').value = r.vertragsbeginn || '';
-      gi('flaufzeit').value = r.laufzeit || '12 Monate';
-      gi('fende').value = r.vertragsende_iso || '';
-      gi('finvest').value = r.invest_final || r.invest || '';
-      setLeistungen(r.leistungen || []);
-      gi('fnotiz').value = r.notiz || '';
-      gi('fmodal').classList.add('on');
-    }
+  /* ── Status ── */
+  function status(r) {
+    if (!r.vertragsende_iso) return { t: 'Unbekannt', c: 'binfo' };
+    var d = (new Date(r.vertragsende_iso) - new Date()) / 86400000;
+    if (d < 0) return { t: 'Abgelaufen', c: 'bdanger' };
+    if (d <= 90) return { t: 'Läuft bald ab', c: 'bwarn' };
+    return { t: 'Aktiv', c: 'bok' };
+  }
 
-    async function doSave() {
-      var id = gi('fid').value, kunde = gv('fkunde');
-      if (!kunde) { alert('Kundenname ist Pflichtfeld.'); return; }
-      var lz = gi('flaufzeit').value;
-      var investVal = parseFloat(gi('finvest').value) || null;
-      var row = {
-        kunde: kunde,
-        angebotsnr: gv('fnr'),
-        angebotsdatum: gv('fdatum'),
-        vertragsbeginn: gv('fbeginn'),
-        laufzeit: lz,
-        laufzeit_monate: parseInt(lz) || 12,
-        verlaengerung: '12 Monate',
-        vertragsende_iso: gi('fende').value || null,
-        invest: investVal,
-        invest_final: investVal,
-        invest_label: null,
-        invest_final_label: null,
-        leistungen: getLeistungen(),
-        notiz: gv('fnotiz')
-      };
-      var res = id
-        ? await SB.from('kunden').update(row).eq('id', id)
-        : await SB.from('kunden').insert([row]);
-      if (res.error) { toast('Fehler: ' + res.error.message); return; }
-      closeModal(); await doLoad();
-      toast(id ? '✓ Aktualisiert' : '✓ Hinzugefügt');
-    }
-
-    async function doDelete(id) {
-      if (!confirm('Eintrag wirklich löschen?')) return;
-      var res = await SB.from('kunden').delete().eq('id', id);
-      if (res.error) { toast('Fehler: ' + res.error.message); return; }
-      await doLoad(); toast('Eintrag gelöscht');
-    }
-
-    function closeModal() { gi('fmodal').classList.remove('on'); }
-
-    /* ---------------------------------------------------------------
-       Settings (API Key change)
-    --------------------------------------------------------------- */
-    function doSettings() {
-      var cur = ls('ai_key') || '';
-      var k = prompt('OpenAI API Key (sk-...):', cur ? '••••' + cur.slice(-4) : '');
-      if (k && !k.startsWith('••••')) { lss('ai_key', k.trim()); toast('✓ Key gespeichert'); }
-    }
-
-    /* ---------------------------------------------------------------
-       CSV Export
-    --------------------------------------------------------------- */
-    function doCSV() {
-      var h = ['Kunde','Angebotsnr','Angebotsdatum','Vertragsbeginn','Laufzeit',
-               'Vertragsende','Invest Final','Rabatt %','Status','Leistungen','Notiz'];
-      var rows = DATA.map(function (r) {
-        var st = status(r);
-        return [r.kunde, r.angebotsnr, r.angebotsdatum, r.vertragsbeginn, r.laufzeit,
-          r.vertragsende_iso ? fmtD(r.vertragsende_iso) : '',
-          r.invest_final_label || fmtE(r.invest_final || r.invest),
-          r.invest_rabatt_prozent ? r.invest_rabatt_prozent + '%' : '',
-          st.t,
-          (r.leistungen || []).join(' | '),
-          r.notiz
-        ].map(function (v) { return '"' + String(v || '').replace(/"/g, '""') + '"'; }).join(',');
-      });
-      var csv = [h.join(',')].concat(rows).join('\n');
-      var a = document.createElement('a');
-      a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
-      a.download = 'csm_' + new Date().toISOString().slice(0, 10) + '.csv';
-      a.click();
-    }
-
-    /* ---------------------------------------------------------------
-       Toast Notification
-    --------------------------------------------------------------- */
-    function toast(msg) {
-      var n = gi('notify'); n.textContent = msg; n.classList.add('on');
-      setTimeout(function () { n.classList.remove('on'); }, 2800);
-    }
-
-    /* ---------------------------------------------------------------
-       Close modals on background click
-    --------------------------------------------------------------- */
-    document.querySelectorAll('.mbg').forEach(function (bg) {
-      bg.addEventListener('click', function (e) { if (e.target === bg) bg.classList.remove('on'); });
+  /* ── Table Render ── */
+  function doRender() {
+    var q = (gv('qsearch')||'').toLowerCase(), fs = gi('qstatus').value, sc = gi('qsort').value;
+    var rows = DATA.filter(function(r) {
+      if (q && !r.kunde.toLowerCase().includes(q)) return false;
+      if (fs && status(r).t !== fs) return false;
+      return true;
     });
+    rows.sort(function(a,b) {
+      if (sc==='kunde') return a.kunde.localeCompare(b.kunde,'de');
+      if (sc==='ende') return (a.vertragsende_iso||'9999').localeCompare(b.vertragsende_iso||'9999');
+      if (sc==='invest') return (b.invest_final||b.invest||0)-(a.invest_final||a.invest||0);
+      return 0;
+    });
+    var tb = gi('tbody');
+    if (!rows.length) { tb.innerHTML='<tr><td colspan="9"><div class="empty"><div class="big">📋</div><p>Noch keine Kunden.</p></div></td></tr>'; return; }
+    tb.innerHTML = rows.map(function(r) {
+      var st = status(r);
+      var tags = (r.leistungen||[]).map(function(l){return '<span class="tag">'+l+'</span>';}).join('');
+      var verl = r.verlaengerung ? '<span style="font-size:11px;color:var(--text3);display:block;margin-top:2px">+'+r.verlaengerung+' Auto</span>' : '';
+      return '<tr>'+
+        '<td class="kname">'+r.kunde+'<small>'+(r.angebotsnr||'')+'</small></td>'+
+        '<td>'+(tags||'<span style="color:var(--text3)">—</span>')+'</td>'+
+        '<td style="white-space:nowrap;font-size:12px;color:var(--text2)">'+(r.angebotsdatum||'—')+'</td>'+
+        '<td><span class="edit" data-id="'+r.id+'" onclick="doBeginn(this)">'+(r.vertragsbeginn||'— klicken')+'</span></td>'+
+        '<td>'+(r.laufzeit||'—')+verl+'</td>'+
+        '<td style="white-space:nowrap">'+(r.vertragsende_iso?fmtD(r.vertragsende_iso):'—')+'</td>'+
+        '<td style="white-space:nowrap">'+buildInvest(r)+'</td>'+
+        '<td><span class="badge '+st.c+'">'+st.t+'</span></td>'+
+        '<td style="white-space:nowrap">'+
+          '<button class="ic" data-id="'+r.id+'" onclick="openEdit(this.dataset.id)">✏️</button>'+
+          '<button class="ic del" data-id="'+r.id+'" onclick="doDelete(this.dataset.id)">🗑</button>'+
+        '</td></tr>';
+    }).join('');
+  }
 
-  </script>
+  /* ── Stats ── */
+  function doStats() {
+    gi('s1').textContent = new Set(DATA.map(function(r){return r.kunde;})).size;
+    gi('s2').textContent = DATA.reduce(function(a,r){return a+(r.leistungen||[]).length;},0);
+    gi('s3').textContent = DATA.filter(function(r){return status(r).t==='Läuft bald ab';}).length;
+    var t = DATA.reduce(function(a,r){return a+(Number(r.invest_final||r.invest)||0);},0);
+    gi('s4').textContent = t>0 ? t.toLocaleString('de-DE')+' €' : '—';
+  }
+
+  /* ── Tabs ── */
+  function doTab(tab) {
+    document.querySelectorAll('.tab').forEach(function(b,i){b.classList.toggle('on',(tab==='liste'&&i===0)||(tab==='matrix'&&i===1));});
+    gi('tc-liste').classList.toggle('on',tab==='liste');
+    gi('tc-matrix').classList.toggle('on',tab==='matrix');
+    if (tab==='matrix') doMatrix();
+  }
+
+  /* ── Matrix ── */
+  function doMatrix() {
+    var allL=[...new Set(DATA.flatMap(function(r){return r.leistungen||[];}))].sort();
+    var fd=gi('lfilter');
+    var fh='<span style="font-size:12px;color:var(--text2)">Filter:</span>';
+    fh+='<button class="ftag'+(FILTER==='alle'?' on':'')+'" data-f="alle" onclick="setFilter(this)">Alle</button>';
+    allL.forEach(function(l){fh+='<button class="ftag'+(FILTER===l?' on':'')+'" data-f="'+l.replace(/"/g,'&quot;')+'" onclick="setFilter(this)">'+l+'</button>';});
+    fd.innerHTML=fh;
+    var showL=FILTER==='alle'?allL:[FILTER];
+    var showK=FILTER==='alle'?DATA:DATA.filter(function(r){return(r.leistungen||[]).includes(FILTER);});
+    var thead='<tr><th class="kc">Kunde</th>';
+    showL.forEach(function(l){thead+='<th style="max-width:110px;white-space:normal;text-align:center">'+l+'</th>';});
+    thead+='<th>Laufzeit</th><th>Vertragsende</th><th>Invest</th></tr>';
+    gi('mhead').innerHTML=thead;
+    var tbody='';
+    showK.forEach(function(r){
+      tbody+='<tr><td class="kn">'+r.kunde+'<small>'+(r.angebotsnr||'')+'</small></td>';
+      showL.forEach(function(l){tbody+='<td>'+((r.leistungen||[]).includes(l)?'<span class="mchk">✓</span>':'<span class="mempty">·</span>')+'</td>';});
+      tbody+='<td style="font-size:12px;white-space:nowrap">'+(r.laufzeit||'—')+'</td>';
+      tbody+='<td style="font-size:12px;white-space:nowrap">'+(r.vertragsende_iso?fmtD(r.vertragsende_iso):'—')+'</td>';
+      tbody+='<td style="font-size:12px;white-space:nowrap">'+buildInvest(r)+'</td></tr>';
+    });
+    gi('mbody').innerHTML=tbody;
+  }
+  function setFilter(el){FILTER=el.dataset.f;doMatrix();}
+
+  /* ── Vertragsbeginn inline edit ── */
+  async function doBeginn(el) {
+    var id=el.dataset.id, cur=el.textContent==='— klicken'?'':el.textContent;
+    var val=prompt('Vertragsbeginn (TT.MM.JJJJ):',cur);
+    if(val===null) return;
+    var t=val.trim(), r=DATA.find(function(x){return x.id===id;}), ende=null;
+    var dp=t.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if(dp){var d=new Date(parseInt(dp[3]),parseInt(dp[2])-1,parseInt(dp[1]));d.setMonth(d.getMonth()+(r.laufzeit_monate||12));ende=d.toISOString().slice(0,10);}
+    var res=await SB.from('kunden').update({vertragsbeginn:t,vertragsende_iso:ende}).eq('id',id);
+    if(res.error){toast('Fehler: '+res.error.message);return;}
+    await doLoad();
+    toast(ende?'✓ Gespeichert – Vertragsende: '+fmtD(ende):'✓ Gespeichert');
+  }
+
+  /* ── PDF Upload ── */
+  async function doPDF(input) {
+    var files=Array.from(input.files); if(!files.length) return; input.value='';
+    gi('upmodal').classList.add('on');
+    for(var i=0;i<files.length;i++){
+      setP('Analysiere: '+files[i].name,(i/files.length)*100);
+      try {
+        var b64=await toB64(files[i]);
+        var parsed=await doExtract(b64);
+        if(parsed){
+          var row={
+            kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
+            vertragsbeginn:parsed.vertragsbeginn,laufzeit:parsed.laufzeit,
+            laufzeit_monate:parsed.laufzeit_monate||12,verlaengerung:parsed.verlaengerung||'12 Monate',
+            vertragsende_iso:parsed.vertragsende_iso||null,
+            invest_brutto:parsed.invest_brutto||null,invest_brutto_label:parsed.invest_brutto_label||null,
+            invest_rabatt_prozent:parsed.invest_rabatt_prozent||null,
+            invest_final:parsed.invest_final||null,invest_final_label:parsed.invest_final_label||null,
+            invest_rhythmus:parsed.invest_rhythmus||'jaehrlich',
+            invest:parsed.invest_final||parsed.invest||null,
+            invest_label:parsed.invest_final_label||parsed.invest_label||null,
+            leistungen:parsed.leistungen||[],notiz:parsed.notiz||''
+          };
+          var ins=await SB.from('kunden').insert([row]);
+          if(ins.error) throw new Error(ins.error.message);
+          await doLoad(); toast('✓ '+parsed.kunde+' hinzugefügt');
+        }
+      } catch(e){ toast('Fehler: '+e.message); }
+    }
+    setP('Fertig',100);
+    setTimeout(function(){gi('upmodal').classList.remove('on');},800);
+  }
+  function setP(t,p){gi('uprog').textContent=t;gi('ubar').style.width=p+'%';}
+  function toB64(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=function(){rej(new Error('Lesefehler'));};r.readAsDataURL(file);});}
+
+  /* ── AI Extraction via Anthropic Claude ── */
+  async function doExtract(b64) {
+    var apiKey = ls('anthropic_key');
+    if (!apiKey) throw new Error('Kein Anthropic API Key. Bitte unter ⚙ API Key eintragen.');
+
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1500,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
+            { type: 'text', text: 'Du analysierst ein Smile AI Angebotsdokument.\nAntworte NUR mit validem JSON. Kein Markdown. Nur Werte die explizit im Dokument stehen.\n\n1. KUNDE: Nach "Angebotsempfaenger:" oder "Angebot fuer:". Nur Firmenname. Niemals "Smile AI GmbH" oder "Dr. Kaske GmbH".\n\n2. ANGEBOTSNR & DATUM: Nach "Angebotsnummer:" und "Angebotsdatum:". Exakt kopieren.\n\n3. LEISTUNGEN: Lies die Modulnamen 1:1 aus der LINKEN SPALTE der Tabelle exakt wie sie stehen. Kategoriezeilen weglassen. Mehrzeilige Namen zusammenfuegen.\n\n4. INVEST: Kurz vor/nach "Details:" alle Euro-Betraege suchen. Letzte/kleinste = invest_final. Erste/groesste = invest_brutto. invest_rabatt_prozent berechnen falls unterschiedlich. invest_rhythmus: "monatlich" oder "jaehrlich".\n\n5. LAUFZEIT: Aus "bei X Monaten Laufzeit".\n\n6. VERTRAGSBEGINN: Aus "Laufzeit des Vertrages beginnt...".\n\n{"kunde":"","angebotsnr":"","angebotsdatum":"","vertragsbeginn":"","laufzeit":"","laufzeit_monate":12,"verlaengerung":"12 Monate","vertragsende_iso":null,"leistungen":[],"invest_brutto":0,"invest_brutto_label":"","invest_rabatt_prozent":null,"invest_final":0,"invest_final_label":"","invest_rhythmus":"jaehrlich","notiz":""}' }
+          ]
+        }]
+      })
+    });
+    if (!resp.ok) {
+      var e = await resp.json().catch(function(){return{};});
+      throw new Error(e.error && e.error.message ? e.error.message : 'Anthropic Fehler ' + resp.status);
+    }
+    var j = await resp.json();
+    var txt = (j.content && j.content[0] && j.content[0].text) || '';
+    var clean = txt.replace(/```json|```/g,'').trim();
+    try { return JSON.parse(clean); }
+    catch(e) { throw new Error('Claude Antwort ungueltig: ' + clean.slice(0,150)); }
+  }
+
+  /* ── Leistungen Tag Editor ── */
+  function renderLTags(){gi('ltags').innerHTML=getLeistungen().map(function(l,i){return'<span class="ltag">'+l+'<button onclick="removeLeistung('+i+')" title="Entfernen">×</button></span>';}).join('');}
+  function getLeistungen(){var raw=gi('fleistungen').value;return raw?raw.split('\n').map(function(s){return s.trim();}).filter(Boolean):[];}
+  function setLeistungen(arr){gi('fleistungen').value=arr.join('\n');renderLTags();}
+  function addLeistung(){var inp=gi('lnew'),val=inp.value.trim();if(!val)return;var arr=getLeistungen();if(!arr.includes(val)){arr.push(val);setLeistungen(arr);}inp.value='';}
+  function removeLeistung(idx){var arr=getLeistungen();arr.splice(idx,1);setLeistungen(arr);}
+
+  /* ── Modal Add/Edit ── */
+  function openAdd(){gi('ftitle').textContent='Kunde hinzufügen';gi('fid').value='';['fkunde','fnr','fdatum','fbeginn','finvest','fnotiz'].forEach(function(id){gi(id).value='';});gi('fende').value='';setLeistungen([]);gi('fmodal').classList.add('on');}
+  function openEdit(id){
+    var r=DATA.find(function(x){return x.id===id;});if(!r)return;
+    gi('ftitle').textContent='Eintrag bearbeiten';gi('fid').value=id;
+    gi('fkunde').value=r.kunde||'';gi('fnr').value=r.angebotsnr||'';gi('fdatum').value=r.angebotsdatum||'';
+    gi('fbeginn').value=r.vertragsbeginn||'';gi('flaufzeit').value=r.laufzeit||'12 Monate';
+    gi('fende').value=r.vertragsende_iso||'';gi('finvest').value=r.invest_final||r.invest||'';
+    setLeistungen(r.leistungen||[]);gi('fnotiz').value=r.notiz||'';gi('fmodal').classList.add('on');
+  }
+  async function doSave(){
+    var id=gi('fid').value,kunde=gv('fkunde');if(!kunde){alert('Kundenname ist Pflichtfeld.');return;}
+    var lz=gi('flaufzeit').value,inv=parseFloat(gi('finvest').value)||null;
+    var row={kunde:kunde,angebotsnr:gv('fnr'),angebotsdatum:gv('fdatum'),vertragsbeginn:gv('fbeginn'),
+      laufzeit:lz,laufzeit_monate:parseInt(lz)||12,verlaengerung:'12 Monate',
+      vertragsende_iso:gi('fende').value||null,invest:inv,invest_final:inv,
+      invest_label:null,invest_final_label:null,leistungen:getLeistungen(),notiz:gv('fnotiz')};
+    var res=id?await SB.from('kunden').update(row).eq('id',id):await SB.from('kunden').insert([row]);
+    if(res.error){toast('Fehler: '+res.error.message);return;}
+    closeModal();await doLoad();toast(id?'✓ Aktualisiert':'✓ Hinzugefügt');
+  }
+  async function doDelete(id){
+    if(!confirm('Eintrag wirklich löschen?'))return;
+    var res=await SB.from('kunden').delete().eq('id',id);
+    if(res.error){toast('Fehler: '+res.error.message);return;}
+    await doLoad();toast('Eintrag gelöscht');
+  }
+  function closeModal(){gi('fmodal').classList.remove('on');}
+
+  /* ── Settings ── */
+  function doSettings(){
+    var cur=ls('anthropic_key')||'';
+    var k=prompt('Anthropic API Key (sk-ant-...):', cur?'••••'+cur.slice(-4):'');
+    if(k&&!k.startsWith('••••')){lss('anthropic_key',k.trim());toast('✓ Key gespeichert');}
+  }
+
+  /* ── CSV Export ── */
+  function doCSV(){
+    var h=['Kunde','Angebotsnr','Angebotsdatum','Vertragsbeginn','Laufzeit','Vertragsende','Invest','Rabatt %','Status','Leistungen','Notiz'];
+    var rows=DATA.map(function(r){var st=status(r);return[r.kunde,r.angebotsnr,r.angebotsdatum,r.vertragsbeginn,r.laufzeit,r.vertragsende_iso?fmtD(r.vertragsende_iso):'',r.invest_final_label||fmtE(r.invest_final||r.invest),r.invest_rabatt_prozent?r.invest_rabatt_prozent+'%':'',st.t,(r.leistungen||[]).join(' | '),r.notiz].map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');});
+    var csv=[h.join(',')].concat(rows).join('\n');
+    var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='dealdesk_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  }
+
+  /* ── Toast ── */
+  function toast(msg){var n=gi('notify');n.textContent=msg;n.classList.add('on');setTimeout(function(){n.classList.remove('on');},2800);}
+
+  /* ── Close modals on bg click ── */
+  document.querySelectorAll('.mbg').forEach(function(bg){bg.addEventListener('click',function(e){if(e.target===bg)bg.classList.remove('on');});});
+</script>
 </body>
 </html>
