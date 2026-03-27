@@ -149,7 +149,6 @@
     <div class="logo">Deal<span>Desk</span></div>
     <div class="sp"></div>
     <span class="user-name" id="user-name"></span>
-    <button class="tbtn" onclick="doSettings()">⚙ API Key</button>
     <button class="tbtn" onclick="openAdd()">+ Manuell</button>
     <label class="tbtn pri" style="cursor:pointer">
       ↑ PDF hochladen
@@ -273,7 +272,7 @@
   var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3J0ZmlvY3FsZWFxcXZjZmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTE1ODQsImV4cCI6MjA4OTg2NzU4NH0.Oy7eEu4bkO9n3U6PbCPhEFOp4BjHXSeDNgVCa6AWSQ8';
   var CLIENT_ID = 'a917e360-e8fa-4b2c-9c52-4b4f3de30022';
   var TENANT_ID = '645a8199-b652-44c7-903a-9f33740ce3dd';
-  var REDIRECT_URI = 'https://ep-sai.github.io/dealdesk/';
+  var REDIRECT_URI = 'https://stellar-stardust-9a4f42.netlify.app';
 
   /* ── State ── */
   var SB = null, DATA = [], FILTER = 'alle';
@@ -528,15 +527,10 @@
 
   /* ── AI Extraction via Anthropic Claude ── */
   async function doExtract(b64) {
-    var apiKey = ls('anthropic_key');
-    if (!apiKey) throw new Error('Kein Anthropic API Key. Bitte unter ⚙ API Key eintragen.');
-
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    var resp = await fetch('/api/anthropic', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
@@ -597,12 +591,7 @@
   }
   function closeModal(){gi('fmodal').classList.remove('on');}
 
-  /* ── Settings ── */
-  function doSettings(){
-    var cur=ls('anthropic_key')||'';
-    var k=prompt('Anthropic API Key (sk-ant-...):', cur?'••••'+cur.slice(-4):'');
-    if(k&&!k.startsWith('••••')){lss('anthropic_key',k.trim());toast('✓ Key gespeichert');}
-  }
+  /* ── Settings: Key lives on Netlify server ── */
 
   /* ── CSV Export ── */
   function doCSV(){
