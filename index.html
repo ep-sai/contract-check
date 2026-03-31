@@ -531,16 +531,24 @@ function stOf(r){
   if(d<=90)return{t:'Läuft bald ab',c:'bwarn',col:'#EF9F27'};
   return{t:'Aktiv',c:'bok',col:'#1D9E75'};
 }
+function cleanLabel(lbl, fallback){
+  // Ignore label if it's a long description text (>40 chars or contains certain keywords)
+  if(!lbl)return fallback;
+  if(lbl.length>40||lbl.toLowerCase().includes('finaler')||lbl.toLowerCase().includes('maßnahmen')||lbl.toLowerCase().includes('invest für'))return fallback;
+  return lbl;
+}
 function buildInvest(r){
   var rhy=r.invest_rhythmus==='monatlich'?'mtl.':'p.a.';
   var fin=r.invest_final||r.invest,bru=r.invest_brutto;
   if(!fin&&!bru)return'—';
   var fa=fin||bru,html='';
   if(bru&&r.invest_rabatt_prozent&&bru!==fa){
-    html+='<span style="font-size:11px;color:var(--tx3);text-decoration:line-through">'+(r.invest_brutto_label||fmtE(bru))+'</span>';
+    var bruttoLbl=cleanLabel(r.invest_brutto_label,fmtE(bru));
+    html+='<span style="font-size:11px;color:var(--tx3);text-decoration:line-through">'+bruttoLbl+'</span>';
     html+=' <span style="font-size:11px;color:var(--green);font-weight:500">-'+r.invest_rabatt_prozent+'%</span><br>';
   }
-  html+='<span style="font-weight:600">'+(r.invest_final_label||r.invest_label||fmtE(fa))+'</span>';
+  var finalLbl=cleanLabel(r.invest_final_label||r.invest_label,fmtE(fa));
+  html+='<span style="font-weight:600">'+finalLbl+'</span>';
   html+=' <span style="font-size:10px;color:var(--tx3)">'+rhy+'</span>';
   return html;
 }
