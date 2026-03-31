@@ -9,137 +9,164 @@
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" onerror="document.getElementById('login-err').textContent='Fehler: Microsoft Auth konnte nicht geladen werden.'"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    :root{--bg:#F7F6F2;--surface:#fff;--surface2:#F0EEE8;--border:#E2DED6;--border2:#CCC8BE;--text:#1A1916;--text2:#6B6860;--text3:#9E9B93;--accent:#1A1916;--accent-fg:#F7F6F2;--green:#2D6A4F;--green-bg:#D8F3DC;--amber:#7B5E1A;--amber-bg:#FFF3CD;--red:#7B2020;--red-bg:#FFE0E0;--blue:#1A4A7B;--blue-bg:#E0EEFF;--r:8px;--rl:12px;--sh:0 1px 3px rgba(0,0,0,.06);}
+    :root{--bg:#F7F6F2;--sur:#fff;--sur2:#F0EEE8;--bdr:#E2DED6;--bdr2:#CCC8BE;--tx:#1A1916;--tx2:#6B6860;--tx3:#9E9B93;--ac:#1A1916;--acfg:#F7F6F2;--green:#2D6A4F;--gbg:#D8F3DC;--amber:#7B5E1A;--abg:#FFF3CD;--red:#7B2020;--rbg:#FFE0E0;--blue:#1A4A7B;--bbg:#E0EEFF;--r:8px;--rl:12px;}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
-    #login-screen{display:none;align-items:center;justify-content:center;min-height:100vh;padding:2rem;background:var(--bg);}
-    .login-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:3rem 2.5rem;max-width:400px;width:100%;box-shadow:var(--sh);text-align:center;}
-    .login-card h1{font-size:26px;font-weight:600;margin-bottom:6px;}
-    .login-card p{color:var(--text2);font-size:14px;margin-bottom:2rem;}
-    .ms-btn{background:#0078d4;color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:"DM Sans",sans-serif;display:inline-flex;align-items:center;gap:10px;transition:opacity .15s;}
-    .ms-btn:hover{opacity:.85;}
-    .login-err{color:var(--red);font-size:13px;margin-top:12px;min-height:18px;}
+    body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;}
+    /* Login */
+    #ls{display:none;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
+    .lc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:3rem 2.5rem;max-width:400px;width:100%;text-align:center;}
+    .lc h1{font-size:26px;font-weight:600;margin-bottom:6px;}
+    .lc p{color:var(--tx2);font-size:14px;margin-bottom:2rem;}
+    .msb{background:#0078d4;color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:"DM Sans",sans-serif;display:inline-flex;align-items:center;gap:10px;}
+    .msb:hover{opacity:.85;}
+    .lerr{color:var(--red);font-size:13px;margin-top:12px;min-height:18px;}
+    /* App */
     #app{display:none;}
-    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+    .topbar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
     .logo{font-size:18px;font-weight:600;letter-spacing:-.3px;}
-    .logo span{color:var(--text3);font-weight:400;}
+    .logo span{color:var(--tx3);font-weight:400;}
     .sp{flex:1;}
-    .tbtn{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:6px 14px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--text);display:flex;align-items:center;gap:6px;transition:background .12s;white-space:nowrap;}
-    .tbtn:hover{background:var(--surface2);}
-    .tbtn.pri{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+    .tbtn{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 14px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:6px;white-space:nowrap;}
+    .tbtn:hover{background:var(--sur2);}
+    .tbtn.pri{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
     .tbtn.pri:hover{opacity:.85;}
-    .tabs{display:flex;border-bottom:1px solid var(--border);background:var(--surface);}
-    .tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 20px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);margin-bottom:-1px;}
-    .tab:hover{color:var(--text);}
-    .tab.on{color:var(--text);border-bottom-color:var(--accent);}
+    .tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--sur);overflow-x:auto;}
+    .tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 20px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--tx2);margin-bottom:-1px;white-space:nowrap;}
+    .tab:hover{color:var(--tx);}
+    .tab.on{color:var(--tx);border-bottom-color:var(--ac);}
     .main{padding:2rem;max-width:1400px;margin:0 auto;}
     .tc{display:none;}
     .tc.on{display:block;}
     /* KPI */
-    .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
-    .kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem 1.5rem;box-shadow:var(--sh);}
-    .kpi-label{font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
-    .kpi-val{font-size:24px;font-weight:600;letter-spacing:-.5px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
-    .kpi-badge{font-size:11px;font-weight:500;padding:2px 6px;border-radius:var(--r);}
-    .pos-badge{background:var(--green-bg);color:var(--green);}
-    .info-badge{background:var(--blue-bg);color:var(--blue);}
+    .kgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
+    .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1.25rem 1.5rem;}
+    .kl{font-size:11px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+    .kv{font-size:24px;font-weight:600;letter-spacing:-.5px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+    .kbp{font-size:11px;font-weight:500;padding:2px 6px;border-radius:var(--r);background:var(--gbg);color:var(--green);}
+    .kbi{font-size:11px;font-weight:500;padding:2px 6px;border-radius:var(--r);background:var(--bbg);color:var(--blue);}
     /* Charts */
-    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-    .chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;box-shadow:var(--sh);}
-    .chart-full{grid-column:1/-1;}
-    .chart-title{font-size:13px;font-weight:600;margin-bottom:1rem;}
-    .legend{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:11px;color:var(--text2);}
-    .legend span{display:flex;align-items:center;gap:4px;}
+    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+    .cc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1.25rem;}
+    .cf{grid-column:1/-1;}
+    .ct{font-size:13px;font-weight:600;margin-bottom:1rem;}
+    .leg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:11px;color:var(--tx2);}
+    .leg span{display:flex;align-items:center;gap:4px;}
     .ldot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
     /* Expiring */
-    .exp-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:var(--r);margin-bottom:8px;}
-    .exp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-    .exp-name{font-weight:500;font-size:13px;flex:1;}
-    .exp-days{font-size:11px;font-weight:500;padding:2px 7px;border-radius:999px;}
+    .exi{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--sur2);border-radius:var(--r);margin-bottom:8px;}
+    .exd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
     /* Table */
-    .toolbar{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap;}
-    .toolbar input,.toolbar select{padding:7px 10px;border:1px solid var(--border2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none;}
+    .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
+    .toolbar input,.toolbar select{padding:7px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
     .toolbar input{width:200px;}
-    .toolbar input:focus,.toolbar select:focus{border-color:var(--accent);}
-    .tcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);box-shadow:var(--sh);overflow:hidden;}
+    .tcard{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;}
     .twrap{overflow-x:auto;}
     table{width:100%;border-collapse:collapse;font-size:13px;}
-    thead th{background:var(--surface2);color:var(--text2);font-weight:500;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
-    td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;}
+    thead th{background:var(--sur2);color:var(--tx2);font-weight:500;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bdr);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+    td{padding:11px 12px;border-bottom:1px solid var(--bdr);vertical-align:top;}
     tr:last-child td{border-bottom:none;}
     tr:hover td{background:#FAFAF8;}
-    .tag{display:inline-block;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:var(--text2);}
+    .tag{display:inline-block;background:var(--sur2);border:1px solid var(--bdr);border-radius:4px;padding:2px 7px;font-size:11px;margin:2px 2px 2px 0;color:var(--tx2);}
     .badge{display:inline-block;padding:3px 9px;border-radius:999px;font-size:11px;font-weight:500;}
-    .bok{background:var(--green-bg);color:var(--green);}
-    .bwarn{background:var(--amber-bg);color:var(--amber);}
-    .bdanger{background:var(--red-bg);color:var(--red);}
-    .binfo{background:var(--blue-bg);color:var(--blue);}
-    .ic{background:none;border:none;cursor:pointer;color:var(--text3);padding:4px 6px;border-radius:4px;font-size:13px;}
-    .ic:hover{color:var(--text);background:var(--surface2);}
+    .bok{background:var(--gbg);color:var(--green);}
+    .bwarn{background:var(--abg);color:var(--amber);}
+    .bdanger{background:var(--rbg);color:var(--red);}
+    .binfo{background:var(--bbg);color:var(--blue);}
+    .ic{background:none;border:none;cursor:pointer;color:var(--tx3);padding:4px 6px;border-radius:4px;font-size:13px;}
+    .ic:hover{color:var(--tx);background:var(--sur2);}
     .ic.del:hover{color:var(--red);}
     /* Matrix */
-    .summary-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.5rem;display:flex;align-items:center;gap:2rem;margin-bottom:1rem;flex-wrap:wrap;}
-    .sb-item{display:flex;flex-direction:column;gap:2px;}
-    .sb-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;}
-    .sb-val{font-size:18px;font-weight:600;}
-    .mwrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rl);background:var(--surface);}
-    .mtable{border-collapse:collapse;font-size:12px;min-width:100%;}
-    .mtable th{background:var(--surface2);padding:8px 12px;border:1px solid var(--border);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);white-space:nowrap;}
-    .mtable th.kc{min-width:180px;text-align:left;position:sticky;left:0;z-index:2;}
-    .mtable td{padding:8px 12px;border:1px solid var(--border);text-align:center;}
-    .mtable td.kn{text-align:left;font-weight:500;font-size:12px;position:sticky;left:0;background:var(--surface);z-index:1;}
-    .mtable td.kn small{display:block;font-weight:400;color:var(--text3);font-size:11px;}
-    .mchk{color:var(--green);font-size:15px;}
-    .mempty{color:var(--border2);}
-    .pot-badge{font-size:11px;font-weight:500;padding:2px 7px;border-radius:var(--r);background:var(--blue-bg);color:var(--blue);}
+    .sbar{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1rem 1.5rem;display:flex;align-items:center;gap:2rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .sbi{display:flex;flex-direction:column;gap:2px;}
+    .sbl{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px;}
+    .sbv{font-size:18px;font-weight:600;}
+    .mwrap{overflow-x:auto;border:1px solid var(--bdr);border-radius:var(--rl);background:var(--sur);}
+    .mt{border-collapse:collapse;font-size:12px;min-width:100%;}
+    .mt th{background:var(--sur2);padding:7px 10px;border:1px solid var(--bdr);font-weight:500;font-size:10px;text-transform:uppercase;color:var(--tx2);white-space:nowrap;}
+    .mt th.kc{min-width:180px;text-align:left;position:sticky;left:0;z-index:2;}
+    .mt td{padding:7px 10px;border:1px solid var(--bdr);text-align:center;}
+    .mt td.kn{text-align:left;font-weight:500;font-size:12px;position:sticky;left:0;background:var(--sur);z-index:1;}
+    .mck{color:var(--green);font-size:13px;}
+    .mem{color:var(--bdr2);}
+    .mfilt{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem;align-items:center;}
+    .mftag{background:var(--sur2);border:1px solid var(--bdr2);border-radius:999px;padding:4px 12px;font-size:12px;cursor:pointer;color:var(--tx2);}
+    .mftag.on{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
     /* Frühwarnsystem */
-    .ampel-row{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;}
-    .ampel-card{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:10px 18px;box-shadow:var(--sh);}
-    .warn-banner{background:var(--amber-bg);border:1px solid #E0C56A;border-radius:var(--rl);padding:1rem 1.25rem;display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;}
-    .warn-title{font-weight:600;font-size:13px;color:var(--amber);}
-    .warn-sub{font-size:12px;color:var(--amber);opacity:.85;margin-top:2px;}
+    .acrow{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap;}
+    .ac{display:flex;align-items:center;gap:8px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:10px 18px;cursor:pointer;}
+    .ac.on{border-width:2px;}
+    .ac.red.on{border-color:#E24B4A;}
+    .ac.amber.on{border-color:#EF9F27;}
+    .ac.green.on{border-color:#1D9E75;}
+    .wban{background:var(--abg);border:1px solid #E0C56A;border-radius:var(--rl);padding:1rem 1.25rem;display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;}
+    .wbtit{font-weight:600;font-size:13px;color:var(--amber);}
+    .wbsub{font-size:12px;color:var(--amber);opacity:.85;margin-top:2px;}
     .vbtn{background:var(--amber);color:#fff;border:none;border-radius:var(--r);padding:7px 16px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
-    .act-btn{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:4px 10px;font-size:11px;cursor:pointer;color:var(--text);font-family:"DM Sans",sans-serif;}
-    .act-btn:hover{background:var(--surface2);}
-    .act-btn.grn{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);}
+    .abt{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:4px 10px;font-size:11px;cursor:pointer;color:var(--tx);font-family:"DM Sans",sans-serif;}
+    .abt:hover{background:var(--sur2);}
+    .abt.grn{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
+    /* Angebotsmaster */
+    .amwrap{display:grid;grid-template-columns:240px 1fr;gap:0;border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;background:var(--sur);}
+    .amsid{background:var(--sur2);border-right:1px solid var(--bdr);padding:1rem;}
+    .amcat{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);padding:8px 10px 4px;margin-top:8px;}
+    .amcat:first-child{margin-top:0;}
+    .amcatbtn{display:block;width:100%;background:none;border:none;text-align:left;padding:6px 10px;border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--tx2);}
+    .amcatbtn:hover{background:var(--bdr);}
+    .amcatbtn.on{background:var(--ac);color:var(--acfg);}
+    .amcont{padding:1.5rem;overflow-y:auto;max-height:70vh;}
+    .amgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+    .amcard{border:1px solid var(--bdr);border-radius:var(--rl);padding:1rem;cursor:pointer;transition:border-color .15s,background .15s;position:relative;}
+    .amcard:hover{border-color:var(--bdr2);}
+    .amcard.sel{border-color:var(--ac);background:#F7F6F2;}
+    .amcard .chk{position:absolute;top:10px;right:10px;width:18px;height:18px;border:1px solid var(--bdr2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--sur);}
+    .amcard.sel .chk{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
+    .amcname{font-weight:600;font-size:13px;margin-bottom:4px;padding-right:24px;}
+    .amcdesc{font-size:11px;color:var(--tx2);line-height:1.5;}
+    .ambar{background:var(--sur2);border-top:1px solid var(--bdr);padding:1rem 1.5rem;display:flex;align-items:center;gap:12px;}
     /* Modals */
     .mbg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;align-items:center;justify-content:center;padding:1rem;}
     .mbg.on{display:flex;}
-    .modal{background:var(--surface);border-radius:var(--rl);padding:2rem;max-width:560px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.12);max-height:90vh;overflow-y:auto;}
+    .modal{background:var(--sur);border-radius:var(--rl);padding:2rem;max-width:600px;width:100%;box-shadow:0 20px 40px rgba(0,0,0,.12);max-height:90vh;overflow-y:auto;}
     .modal h3{font-size:17px;font-weight:600;margin-bottom:1.25rem;}
     .fg{margin-bottom:14px;}
-    .fg label{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px;display:block;}
-    .fg input,.fg textarea,.fg select{width:100%;padding:8px 10px;border:1px solid var(--border2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--surface);color:var(--text);outline:none;resize:vertical;}
-    .fg input:focus,.fg textarea:focus{border-color:var(--accent);}
+    .fg label{font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:4px;display:block;}
+    .fg input,.fg textarea,.fg select{width:100%;padding:8px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;resize:vertical;}
+    .fg input:focus,.fg textarea:focus{border-color:var(--ac);}
     .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .mact{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
-    .sbtn{background:none;border:1px solid var(--border2);border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--text);}
-    .sbtn:hover{background:var(--surface2);}
-    .btn{background:var(--accent);color:var(--accent-fg);border:none;border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
-    .ltag{display:inline-flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2);}
-    .ltag button{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0;}
-    .ltag button:hover{color:var(--red);}
-    .uprog{font-size:13px;color:var(--text2);text-align:center;padding:8px;}
-    .empty{text-align:center;padding:4rem 2rem;color:var(--text3);}
-    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--accent);color:var(--accent-fg);border-radius:var(--r);padding:10px 18px;font-size:13px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+    .sbtn{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--tx);}
+    .sbtn:hover{background:var(--sur2);}
+    .btn{background:var(--ac);color:var(--acfg);border:none;border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+    .ltag{display:inline-flex;align-items:center;gap:5px;background:var(--sur2);border:1px solid var(--bdr);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--tx2);}
+    .ltag button{background:none;border:none;cursor:pointer;color:var(--tx3);font-size:14px;line-height:1;padding:0;}
+    /* Misc */
+    .uprog{font-size:13px;color:var(--tx2);text-align:center;padding:8px;}
+    .empty{text-align:center;padding:4rem 2rem;color:var(--tx3);}
+    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ac);color:var(--acfg);border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
     .notify.on{opacity:1;transform:translateY(0);}
-    @media(max-width:768px){.kpi-grid{grid-template-columns:1fr 1fr;}.charts-grid{grid-template-columns:1fr;}.main{padding:1rem;}.topbar{padding:0 1rem;gap:8px;}}
+    /* Angebot Preview Modal */
+    .aprev{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:1.5rem;margin-top:1rem;font-size:12px;max-height:400px;overflow-y:auto;}
+    .aprev-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr);}
+    .aprev-row:last-child{border-bottom:none;}
+    .aprev-mod{font-weight:600;font-size:12px;min-width:180px;}
+    .aprev-desc{color:var(--tx2);flex:1;font-size:11px;}
+    @media(max-width:768px){.kgrid{grid-template-columns:1fr 1fr;}.cgrid{grid-template-columns:1fr;}.main{padding:1rem;}.topbar{padding:0 1rem;gap:8px;}.amwrap{grid-template-columns:1fr;}}
   </style>
 </head>
 <body>
 
 <!-- LOGIN -->
-<div id="login-screen">
-  <div class="login-card">
+<div id="ls">
+  <div class="lc">
     <div style="font-size:36px;margin-bottom:12px">📊</div>
     <h1>DealDesk</h1>
     <p>Melde dich mit deinem Smile AI Account an.</p>
-    <button class="ms-btn" onclick="doMSLogin()">
+    <button class="msb" onclick="doMSLogin()">
       <svg width="20" height="20" viewBox="0 0 21 21" fill="none"><rect width="10" height="10" fill="#F25022"/><rect x="11" width="10" height="10" fill="#7FBA00"/><rect y="11" width="10" height="10" fill="#00A4EF"/><rect x="11" y="11" width="10" height="10" fill="#FFB900"/></svg>
       Mit Microsoft anmelden
     </button>
-    <div class="login-err" id="login-err"></div>
-    <p style="color:var(--text3);font-size:11px;margin-top:1.5rem;">Nur für Smile AI Mitarbeitende</p>
+    <div class="lerr" id="login-err"></div>
+    <p style="color:var(--tx3);font-size:11px;margin-top:1.5rem;">Nur für Smile AI Mitarbeitende</p>
   </div>
 </div>
 
@@ -148,131 +175,124 @@
   <div class="topbar">
     <div class="logo">Deal<span>Desk</span></div>
     <div class="sp"></div>
-    <span id="user-name" style="font-size:12px;color:var(--text3);"></span>
+    <span id="uname" style="font-size:12px;color:var(--tx3);"></span>
     <button class="tbtn" onclick="openAdd()">+ Manuell</button>
     <label class="tbtn pri" style="cursor:pointer">↑ PDF hochladen<input type="file" accept=".pdf" multiple style="display:none" onchange="doPDF(this)"></label>
     <button class="tbtn" onclick="doLogout()" title="Abmelden">↩</button>
   </div>
-
   <div class="tabs">
     <button class="tab on" onclick="doTab('ceo')">📊 CEO Dashboard</button>
-    <button class="tab" onclick="doTab('liste')">Kundenübersicht</button>
+    <button class="tab" onclick="doTab('vertraege')">Vertragsübersicht</button>
     <button class="tab" onclick="doTab('matrix')">Leistungsmatrix</button>
     <button class="tab" onclick="doTab('frueh')">⚠ Frühwarnsystem</button>
+    <button class="tab" onclick="doTab('master')">📋 Angebotsmaster</button>
   </div>
-
   <div class="main">
 
-    <!-- CEO DASHBOARD -->
+    <!-- CEO -->
     <div id="tc-ceo" class="tc on">
-      <div class="kpi-grid">
-        <div class="kpi"><div class="kpi-label">Jahresumsatz</div><div class="kpi-val" id="kpi-umsatz">—</div></div>
-        <div class="kpi"><div class="kpi-label">Ø Vertragswert</div><div class="kpi-val" id="kpi-avg">—</div></div>
-        <div class="kpi"><div class="kpi-label">Aktive Verträge</div><div class="kpi-val" id="kpi-aktiv">—</div></div>
-        <div class="kpi"><div class="kpi-label">Verlängerungsquote</div><div class="kpi-val" id="kpi-quote">—</div></div>
-        <div class="kpi"><div class="kpi-label">Upsell-Potenzial</div><div class="kpi-val" id="kpi-upsell" style="color:var(--blue)">—</div></div>
+      <div class="kgrid">
+        <div class="kpi"><div class="kl">Jahresumsatz</div><div class="kv" id="k1">—</div></div>
+        <div class="kpi"><div class="kl">Ø Vertragswert</div><div class="kv" id="k2">—</div></div>
+        <div class="kpi"><div class="kl">Aktive Verträge</div><div class="kv" id="k3">—</div></div>
+        <div class="kpi"><div class="kl">Verlängerungsquote</div><div class="kv" id="k4">—</div></div>
+        <div class="kpi"><div class="kl">Upsell-Potenzial</div><div class="kv" id="k5" style="color:var(--blue)">—</div></div>
       </div>
-      <div class="charts-grid">
-        <div class="chart-card">
-          <div class="chart-title">Umsatz nach Kunde</div>
-          <div class="legend" id="pie-legend"></div>
-          <div style="position:relative;width:100%;height:220px;"><canvas id="pieChart"></canvas></div>
-        </div>
-        <div class="chart-card">
-          <div class="chart-title">Bald ablaufende Verträge</div>
-          <div id="expiring-list"><div class="empty" style="padding:1rem;font-size:13px;">Keine Daten</div></div>
-        </div>
-        <div class="chart-card chart-full">
-          <div class="chart-title">Top 5 Leistungen nach Kunden-Abdeckung</div>
-          <div style="position:relative;width:100%;height:220px;"><canvas id="barChart"></canvas></div>
-        </div>
+      <div class="cgrid">
+        <div class="cc"><div class="ct">Umsatz nach Kunde</div><div class="leg" id="pie-leg"></div><div style="position:relative;height:220px"><canvas id="pieC"></canvas></div></div>
+        <div class="cc"><div class="ct">Bald ablaufende Verträge</div><div id="explist"><div class="empty" style="padding:1rem">Keine Daten</div></div></div>
+        <div class="cc cf"><div class="ct">Top 5 Leistungen</div><div style="position:relative;height:220px"><canvas id="barC"></canvas></div></div>
       </div>
     </div>
 
-    <!-- KUNDENÜBERSICHT -->
-    <div id="tc-liste" class="tc">
+    <!-- VERTRAGSÜBERSICHT -->
+    <div id="tc-vertraege" class="tc">
       <div class="toolbar">
-        <input type="text" id="qsearch" placeholder="🔍 Kunde suchen..." oninput="renderListe()">
-        <select id="qstatus" onchange="renderListe()">
-          <option value="">Alle Status</option>
-          <option>Aktiv</option><option>Läuft bald ab</option><option>Abgelaufen</option><option>Unbekannt</option>
-        </select>
-        <select id="qsort" onchange="renderListe()">
-          <option value="kunde">Sortierung: Kunde A–Z</option>
-          <option value="ende">Sortierung: Vertragsende</option>
-          <option value="invest">Sortierung: Invest ↓</option>
-        </select>
+        <input type="text" id="qsearch" placeholder="🔍 Suchen..." oninput="renderV()">
+        <select id="qst" onchange="renderV()"><option value="">Alle Status</option><option>Aktiv</option><option>Läuft bald ab</option><option>Abgelaufen</option><option>Unbekannt</option></select>
+        <select id="qso" onchange="renderV()"><option value="kunde">Kunde A–Z</option><option value="ende">Vertragsende</option><option value="invest">Invest ↓</option></select>
         <div class="sp"></div>
-        <button class="tbtn" onclick="doCSV()">↓ CSV Export</button>
+        <button class="tbtn" onclick="doCSV()">↓ CSV</button>
       </div>
       <div class="tcard"><div class="twrap">
         <table><thead><tr>
-          <th>Kunde</th><th>Leistungen</th><th>Angebotsdatum</th>
+          <th>Kunde / Vertrag</th><th>Leistungen</th><th>Angebotsdatum</th>
           <th>Vertragsbeginn</th><th>Laufzeit</th><th>Vertragsende</th>
-          <th>Invest</th><th>Status</th><th></th>
-        </tr></thead><tbody id="tbody"></tbody></table>
+          <th>Invest</th><th>Status</th><th>Anhang</th><th></th>
+        </tr></thead><tbody id="vtbody"></tbody></table>
       </div></div>
     </div>
 
-    <!-- LEISTUNGSMATRIX -->
+    <!-- MATRIX -->
     <div id="tc-matrix" class="tc">
-      <div class="summary-bar">
-        <div class="sb-item"><div class="sb-label">Gesamt-Potenzial</div><div class="sb-val" id="mat-pot" style="color:var(--blue)">—</div></div>
-        <div class="sb-item"><div class="sb-label">Module gesamt</div><div class="sb-val" id="mat-mod">—</div></div>
-        <div class="sb-item"><div class="sb-label">Ø Module/Kunde</div><div class="sb-val" id="mat-avg">—</div></div>
+      <div class="sbar">
+        <div class="sbi"><div class="sbl">Module gesamt</div><div class="sbv" id="mmod">—</div></div>
+        <div class="sbi"><div class="sbl">Ø Module/Kunde</div><div class="sbv" id="mavg">—</div></div>
         <div class="sp"></div>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px;cursor:pointer;">
-            <input type="checkbox" id="showPrices" onchange="renderMatrix()"> Preise anzeigen
-          </label>
-          <select id="mfilter" onchange="renderMatrix()" style="padding:6px 8px;border:1px solid var(--border2);border-radius:var(--r);font-size:12px;background:var(--surface);color:var(--text);outline:none;">
-            <option value="all">Alle Kunden</option>
-            <option value="active">Nur Aktive</option>
-            <option value="upsell">Upsell-Potenzial</option>
-          </select>
-        </div>
+        <select id="mfcat" onchange="renderMatrix()" style="padding:6px 8px;border:1px solid var(--bdr2);border-radius:var(--r);font-size:12px;background:var(--sur);color:var(--tx);outline:none;">
+          <option value="">Alle Cluster</option>
+          <option>Analytics</option><option>Operativ</option><option>Consulting</option>
+          <option>Amazon</option><option>Reporting</option><option>Knowledge</option><option>International</option>
+        </select>
       </div>
-      <div class="mwrap"><table class="mtable"><thead id="mhead"></thead><tbody id="mbody"></tbody></table></div>
+      <div class="mfilt" id="mfilt"></div>
+      <div class="mwrap"><table class="mt"><thead id="mhead"></thead><tbody id="mbody"></tbody></table></div>
     </div>
 
     <!-- FRÜHWARNSYSTEM -->
     <div id="tc-frueh" class="tc">
-      <div class="ampel-row">
-        <div class="ampel-card"><span style="width:10px;height:10px;border-radius:50%;background:#E24B4A;flex-shrink:0;"></span><span style="font-weight:600;font-size:16px;" id="cnt-red">0</span><span style="font-size:12px;color:var(--text2);">Kritisch &lt;90 Tage</span></div>
-        <div class="ampel-card"><span style="width:10px;height:10px;border-radius:50%;background:#EF9F27;flex-shrink:0;"></span><span style="font-weight:600;font-size:16px;" id="cnt-amber">0</span><span style="font-size:12px;color:var(--text2);">Warnung &lt;180 Tage</span></div>
-        <div class="ampel-card"><span style="width:10px;height:10px;border-radius:50%;background:#1D9E75;flex-shrink:0;"></span><span style="font-weight:600;font-size:16px;" id="cnt-green">0</span><span style="font-size:12px;color:var(--text2);">OK &gt;180 Tage</span></div>
+      <div class="acrow">
+        <div class="ac red" id="ac-red" onclick="setFruehFilter('red')"><span style="width:10px;height:10px;border-radius:50%;background:#E24B4A;flex-shrink:0"></span><span style="font-weight:600;font-size:16px" id="cr">0</span><span style="font-size:12px;color:var(--tx2)">Kritisch &lt;90 Tage</span></div>
+        <div class="ac amber" id="ac-amber" onclick="setFruehFilter('amber')"><span style="width:10px;height:10px;border-radius:50%;background:#EF9F27;flex-shrink:0"></span><span style="font-weight:600;font-size:16px" id="ca">0</span><span style="font-size:12px;color:var(--tx2)">Warnung &lt;180 Tage</span></div>
+        <div class="ac green" id="ac-green" onclick="setFruehFilter('green')"><span style="width:10px;height:10px;border-radius:50%;background:#1D9E75;flex-shrink:0"></span><span style="font-weight:600;font-size:16px" id="cg">0</span><span style="font-size:12px;color:var(--tx2)">OK &gt;180 Tage</span></div>
       </div>
-      <div class="warn-banner" id="warn-banner" style="display:none;">
-        <span style="font-size:20px;">⚠</span>
-        <div style="flex:1;"><div class="warn-title" id="warn-title"></div><div class="warn-sub" id="warn-sub"></div></div>
-        <button class="vbtn">Verlängerungen starten</button>
+      <div class="wban" id="wban" style="display:none">
+        <span style="font-size:20px">⚠</span>
+        <div style="flex:1"><div class="wbtit" id="wtit"></div><div class="wbsub" id="wsub"></div></div>
+        <button class="vbtn" onclick="doTab('master')">Verlängerungen starten</button>
       </div>
       <div class="tcard"><div class="twrap">
-        <table><thead><tr>
-          <th>Kunde</th><th>Leistungen</th><th>Tage bis Ende</th>
-          <th>Vertragsende</th><th>Invest</th><th></th>
-        </tr></thead><tbody id="frueh-tbody"></tbody></table>
+        <table><thead><tr><th>Kunde</th><th>Leistungen</th><th>Tage</th><th>Vertragsende</th><th>Invest</th><th></th></tr></thead>
+        <tbody id="ftbody"></tbody></table>
       </div></div>
     </div>
 
-  </div><!-- /.main -->
-</div><!-- /#app -->
+    <!-- ANGEBOTSMASTER -->
+    <div id="tc-master" class="tc">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem;flex-wrap:wrap;">
+        <div style="font-size:13px;color:var(--tx2)">Maßnahmen auswählen und Angebot erstellen</div>
+        <div class="sp"></div>
+        <span id="am-count" style="font-size:12px;color:var(--tx3)">0 ausgewählt</span>
+        <button class="tbtn" onclick="clearAMSel()">Auswahl zurücksetzen</button>
+        <button class="btn" onclick="openAngebotModal()">Angebot erstellen →</button>
+      </div>
+      <div class="amwrap">
+        <div class="amsid" id="am-sidebar"></div>
+        <div>
+          <div class="amcont" id="am-content"></div>
+          <div class="ambar">
+            <span id="am-selnames" style="font-size:12px;color:var(--tx2);flex:1"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <!-- MODAL: Upload -->
 <div class="mbg" id="upmodal">
   <div class="modal">
     <h3>PDF wird analysiert</h3>
     <div class="uprog" id="uprog">Lese PDF...</div>
-    <div style="margin-top:1rem;background:var(--surface2);border-radius:var(--r);height:4px;overflow:hidden">
-      <div id="ubar" style="height:100%;background:var(--accent);width:0%;transition:width .3s"></div>
-    </div>
+    <div style="margin-top:1rem;background:var(--sur2);border-radius:var(--r);height:4px;overflow:hidden"><div id="ubar" style="height:100%;background:var(--ac);width:0%;transition:width .3s"></div></div>
   </div>
 </div>
 
 <!-- MODAL: Add/Edit -->
 <div class="mbg" id="fmodal">
   <div class="modal">
-    <h3 id="ftitle">Kunde hinzufügen</h3>
+    <h3 id="ftit">Vertrag hinzufügen</h3>
     <input type="hidden" id="fid">
     <div class="fg"><label>Kundenname *</label><input type="text" id="fkunde" placeholder="z.B. Muster GmbH"></div>
     <div class="frow">
@@ -280,25 +300,26 @@
       <div class="fg"><label>Angebotsdatum</label><input type="text" id="fdatum" placeholder="TT.MM.JJJJ"></div>
     </div>
     <div class="frow">
-      <div class="fg"><label>Vertragsbeginn</label><input type="text" id="fbeginn" placeholder="01.01.2026"></div>
+      <div class="fg"><label>Vertragsbeginn</label><input type="text" id="fbeg" placeholder="01.01.2026"></div>
       <div class="fg"><label>Laufzeit</label>
-        <select id="flaufzeit"><option value="12 Monate">12 Monate</option><option value="24 Monate">24 Monate</option><option value="36 Monate">36 Monate</option><option value="6 Monate">6 Monate</option></select>
+        <select id="flz"><option value="12 Monate">12 Monate</option><option value="24 Monate">24 Monate</option><option value="36 Monate">36 Monate</option><option value="6 Monate">6 Monate</option></select>
       </div>
     </div>
     <div class="frow">
       <div class="fg"><label>Vertragsende</label><input type="date" id="fende"></div>
-      <div class="fg"><label>Finaler Invest (€)</label><input type="number" id="finvest" placeholder="75000"></div>
+      <div class="fg"><label>Finaler Invest (€)</label><input type="number" id="finv" placeholder="75000"></div>
     </div>
     <div class="fg">
       <label>Leistungen</label>
       <div id="ltags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px"></div>
       <div style="display:flex;gap:6px">
-        <input type="text" id="lnew" placeholder="Leistung hinzufügen..." style="flex:1;padding:6px 10px;font-size:13px;border:1px solid var(--border2);border-radius:var(--r);font-family:DM Sans,sans-serif;background:var(--surface);color:var(--text);outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();addLeistung()}">
-        <button type="button" class="sbtn" onclick="addLeistung()" style="padding:6px 12px;font-size:13px">+ Add</button>
+        <input type="text" id="lnew" placeholder="Leistung hinzufügen..." style="flex:1;padding:6px 10px;font-size:13px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:DM Sans,sans-serif;background:var(--sur);color:var(--tx);outline:none" onkeydown="if(event.key==='Enter'){event.preventDefault();addL()}">
+        <button type="button" class="sbtn" onclick="addL()" style="padding:6px 12px">+ Add</button>
       </div>
-      <textarea id="fleistungen" style="display:none"></textarea>
+      <textarea id="fleis" style="display:none"></textarea>
     </div>
     <div class="fg"><label>Notiz</label><input type="text" id="fnotiz" placeholder="Optionale Zusatzinfo"></div>
+    <div id="fpdf-link" style="display:none;margin-top:8px;font-size:12px;color:var(--blue)"></div>
     <div class="mact">
       <button class="sbtn" onclick="closeModal()">Abbrechen</button>
       <button class="btn" onclick="doSave()">Speichern</button>
@@ -306,333 +327,609 @@
   </div>
 </div>
 
+<!-- MODAL: Angebot erstellen -->
+<div class="mbg" id="amodal">
+  <div class="modal" style="max-width:700px">
+    <h3>Angebot erstellen</h3>
+    <div class="frow">
+      <div class="fg"><label>Kundenname *</label><input type="text" id="a-kunde" placeholder="z.B. Muster GmbH"></div>
+      <div class="fg"><label>Angebotsnummer</label><input type="text" id="a-nr" placeholder="MUS-001-2026"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Angebotsdatum</label><input type="text" id="a-datum" placeholder="TT.MM.JJJJ"></div>
+      <div class="fg"><label>Vertragsbeginn</label><input type="text" id="a-beginn" placeholder="01.01.2026"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Laufzeit</label><select id="a-lz"><option>12 Monate</option><option>24 Monate</option><option>36 Monate</option></select></div>
+      <div class="fg"><label>Finaler Invest (€ p.a.)</label><input type="number" id="a-invest" placeholder="75000"></div>
+    </div>
+    <div class="fg"><label>Angebotsempfänger (Adresse)</label><textarea id="a-addr" rows="2" placeholder="Firma&#10;Straße, PLZ Stadt"></textarea></div>
+    <div class="fg"><label>Ausgewählte Maßnahmen</label>
+      <div class="aprev" id="a-prev"></div>
+    </div>
+    <div class="fg"><label>Notiz / Sonderkonditionen</label><textarea id="a-notiz" rows="2" placeholder="Optional"></textarea></div>
+    <div class="mact">
+      <button class="sbtn" onclick="gi('amodal').classList.remove('on')">Abbrechen</button>
+      <button class="btn" onclick="doExportAngebot()">📄 PDF Export</button>
+    </div>
+  </div>
+</div>
+
 <div class="notify" id="notify"></div>
 
 <script>
-  var SUPABASE_URL='https://exsrtfiocqleaqqvcffq.supabase.co';
-  var SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3J0ZmlvY3FsZWFxcXZjZmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTE1ODQsImV4cCI6MjA4OTg2NzU4NH0.Oy7eEu4bkO9n3U6PbCPhEFOp4BjHXSeDNgVCa6AWSQ8';
-  var CLIENT_ID='a917e360-e8fa-4b2c-9c52-4b4f3de30022';
-  var TENANT_ID='645a8199-b652-44c7-903a-9f33740ce3dd';
-  var REDIRECT_URI='https://stellar-stardust-9a4f42.netlify.app';
-  var SB=null, DATA=[], FILTER='alle';
-  var pieChartInst=null, barChartInst=null;
-  var CHART_COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#7F77DD','#D4537E','#888780'];
+/* ── Config ── */
+var SB_URL='https://exsrtfiocqleaqqvcffq.supabase.co';
+var SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImV4c3J0ZmlvY3FsZWFxcXZjZmZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyOTE1ODQsImV4cCI6MjA4OTg2NzU4NH0.Oy7eEu4bkO9n3U6PbCPhEFOp4BjHXSeDNgVCa6AWSQ8';
+var CLIENT_ID='a917e360-e8fa-4b2c-9c52-4b4f3de30022';
+var TENANT_ID='645a8199-b652-44c7-903a-9f33740ce3dd';
+var REDIRECT='https://sai-dealdesk.netlify.app';
 
-  function ls(k){return localStorage.getItem(k);}
-  function lss(k,v){localStorage.setItem(k,v);}
-  function gi(id){return document.getElementById(id);}
-  function gv(id){return gi(id).value.trim();}
-  function fmtD(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}
-  function fmtE(v){if(!v)return'—';return Number(v).toLocaleString('de-DE')+' €';}
+/* ── State ── */
+var SB=null,DATA=[],FILTER_FRUEH='all',AM_SEL=[],AM_CAT='Analytics';
+var pieInst=null,barInst=null;
+var COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#7F77DD','#D4537E','#888780'];
 
-  function daysLeft(iso){return Math.round((new Date(iso)-new Date())/86400000);}
-  function statusOf(r){
-    if(!r.vertragsende_iso)return{t:'Unbekannt',c:'binfo',col:'#378ADD'};
-    var d=daysLeft(r.vertragsende_iso);
-    if(d<0)return{t:'Abgelaufen',c:'bdanger',col:'#E24B4A'};
-    if(d<=90)return{t:'Läuft bald ab',c:'bwarn',col:'#EF9F27'};
-    return{t:'Aktiv',c:'bok',col:'#1D9E75'};
+/* ── Angebotsmaster Daten ── */
+var AM_DATA = {
+  Analytics: [
+    {id:'hpi',name:'Human Powered Insights',desc:'Steigerung der Brandperformance durch persönliches E-Commerce-Consulting. Jour Fixe, Jahresgesprächsvorbereitung, Handlungsempfehlungen.'},
+    {id:'sab',name:'Smile Analytics Base',desc:'Die Nr. 1 E-Pharmacy Analytics Plattform. Tool, Setup, Support – alle Brands und PZN, bis zu 20 Shops.'},
+    {id:'sa',name:'Smile Analytics (Verlängerung)',desc:'Verlängerung der bestehenden Smile Analytics Lizenz inkl. aller Deep Dives, Self Service Dashboard und Alerts.'},
+    {id:'sad',name:'Smile Analytics Deep Dives',desc:'Granulares KPI-Monitoring: Sichtbarkeit, Produktseitenqualität, Preise, Data History & Competitor Benchmark.'},
+    {id:'srm',name:'Smile Analytics Retail Media onsite',desc:'WKZ-Chancenidentifikation durch Werbedruck-Analyse der Wettbewerber auf E-Pharmacies.'},
+    {id:'srmo',name:'Smile Analytics Retail Media offsite',desc:'Analyse aller Offsite-Aktivitäten (Google.de, YouTube) im Full Funnel.'},
+    {id:'roas',name:'ROAS Tracking',desc:'Self-Service-Tool zur Effektivität und Effizienz der OnSite-Maßnahmen & Newsletter auf Onlineapotheken.'},
+    {id:'dda',name:'Deep Dive Amazon',desc:'Volle Transparenz im Amazon Marketplace: 360°-Dashboard, Keyword-Rankings, Buybox, Umsätze.'},
+    {id:'ddd',name:'Deep Dive Drogeriemärkte',desc:'Performance-Tracking in dm, Rossmann, Müller: Listung, Verfügbarkeit, Keywords, Preis.'},
+    {id:'ssd',name:'Smile Analytics Self Service Dashboard',desc:'Individuelle Auswertungen und Analysen im flexiblen Visualisierungstool.'},
+    {id:'ddi',name:'Dashboard & Datenintegration',desc:'Einfacher Überblick aller relevanten Marktzahlen durch Integration von Sell-in/Sell-out, WKZ und Smile Analytics.'},
+  ],
+  Operativ: [
+    {id:'opt',name:'Operativer Support Produkttexte',desc:'SEO-optimierte Produkttexte mit medizinisch-wissenschaftlicher Prüfung, Grafiken und Korrekturschleifen.'},
+    {id:'epa',name:'E-Pharmacy-Adaption',desc:'Versandapothekenindividuelle Anpassung von Datenpaketen je nach Shopanforderung.'},
+    {id:'ets',name:'Einbindung der Texte in Shops',desc:'Umsetzungssupport, Monitoring und Erfolgstracking der Textimplementierung in Onlineapotheken.'},
+    {id:'edo',name:'Empfehlungsdossiers',desc:'Quartalsweise vorformatierte, personalisierte Dossiers für datenbasierte OA-Gespräche.'},
+    {id:'jgs',name:'Jahresgesprächsupport',desc:'Datenbasierte Jahresgesprächsvorbereitung mit Handlungsempfehlungen für Top-20-Fokusprodukte.'},
+    {id:'jgd',name:'Jahresgespräch Dossiers',desc:'Einmalige Analyse mit Keyword-, Kategorie- und Retail-Media-Benchmarking für optimale Verhandlungsposition.'},
+    {id:'oab',name:'Onlineapothekenbetreuung',desc:'Sehr hohe Arbeitsentlastung durch direkte Kommunikation und Umsetzungsbegleitung mit den Shops.'},
+    {id:'pm',name:'Preismonitoring',desc:'Tägliches Screening aller E-Pharmacies, Preisvergleichsportale und automatisierte Alerts bei Preisunterschreitungen.'},
+    {id:'csw',name:'Cross-Selling & Warenkorbanalyse',desc:'Intelligente Cross-Selling-Empfehlungen durch Produktverbundindex und Warenkorb-Analyse.'},
+    {id:'bc',name:'Bannercreation',desc:'Professionelle Werbemittel-Erstellung mit HWG-konformem Design und Anti-Skimming-Garantie.'},
+    {id:'ege',name:'Empfehlungsgenerierung E-Pharmacies',desc:'Steigerung der Bewertungen durch Aktivierung zufriedener Nutzer auf reichweitenstarken E-Pharmacies.'},
+  ],
+  Consulting: [
+    {id:'ss',name:'Support & Service',desc:'Dauerhafter interaktiver Informationsaustausch via MS Teams. Plan 1=0,5 P/M, Plan 2=1 P/M, Plan 3=2 P/M.'},
+    {id:'shb',name:'Shop Beratung',desc:'Ermittlung idealer Onlinehandelspartner mit personalisierten Dossiers für Top-20-Onlineapotheken.'},
+    {id:'dpi',name:'Digital Performance Index',desc:'Benchmarking und Optimierung entlang der Customer Journey (Google, Social, Websites, E-Pharmacies).'},
+    {id:'sq',name:'Status Quo',desc:'Einmalige Brand-Analyse auf 5 Shops mit 2 Wettbewerbern je Brand und 2h-Workshop.'},
+    {id:'cfa',name:'Consulting Full Data Access',desc:'Kontinuierliche Performance-Steigerung durch Full Data Access: Sichtbarkeit, PPQ, Preis, Retail Media, Amazon.'},
+    {id:'cja',name:'Customer Journey Analyse',desc:'Stellschrauben im Versandhandel erkennen durch detaillierte Käuferanalyse und Vergleich der E-Pharmacies.'},
+    {id:'aisq',name:'AI Share of Voice Status Quo',desc:'Einmalige Analyse der Markenpräsenz in ChatGPT, Perplexity, Grok und Gemini.'},
+    {id:'aist',name:'AI Share of Voice Analytics Tracking',desc:'Kontinuierliches Monitoring der AI-Sichtbarkeit über webbasierte Tracking-Software.'},
+    {id:'pb',name:'Projectbook',desc:'Langfristiges Projectbook für 18 Monate: Ressourcen, Roadmap, Jahresgespräche, Investempfehlung.'},
+    {id:'bo',name:'Basisoptimierung',desc:'Steigerung der Online-Beratungsqualität durch Listungs-Check, Keywords und Content-Prüfung.'},
+    {id:'mia',name:'Media Invest Analyse',desc:'Datenbasierte Retail-Media-Allokation mit Empfehlungen je Shop, Brand und Maßnahme.'},
+    {id:'mm',name:'Management Meetings',desc:'Halbjährliche Management-Updates mit Fabian Kaske zu Pharmamarkt-Trends und E-Commerce-Strategie.'},
+    {id:'rmb',name:'Retail Media Basics',desc:'Effiziente, datenbasierte WKZ-Allokation auf Händler-, Brand- und Maßnahmenebene.'},
+    {id:'rmbe',name:'Retail Media Benchmark',desc:'Einmaliges Competitor Benchmarking der Retail-Media-Invests auf Brutto-WKZ-Basis.'},
+    {id:'rmu',name:'Retail Media Umsetzung',desc:'Vollständige Planung, Buchung und Abwicklung von Retail-Media-Maßnahmen mit mind. 2,5 ROAS-Garantie.'},
+    {id:'rmkr',name:'Retail Media KPI Report',desc:'Monatlicher Report zu Effektivität der OnSite-Maßnahmen: Reichweite, ROAS, Käufe je Shop und Brand.'},
+    {id:'bob',name:'Bob the Booster',desc:'AI-generierte Retail-Media-Allokation über alle E-Commerce-Channels mit ROAS-Forecasts.'},
+    {id:'ecc',name:'E-Commerce Consulting',desc:'Strategie-Beratung mit Competitor Insights, Brand Insights und Client Insights im Jour Fixe.'},
+    {id:'ecbs',name:'E-Commerce Beratung & Support',desc:'Fortlaufende E-Commerce-Beratung: OA-Terminvor/-nachbereitung, Jahresgesprächsvorbereitung, Bundle-Aktionen.'},
+    {id:'lb',name:'Launch Betreuung',desc:'6-monatige Launch-Strategie-Betreuung mit OA-Kommunikation und Content-Einbindung.'},
+    {id:'lc',name:'Launch Consulting',desc:'6-monatige Launch-Strategie-Beratung mit Senior E-Commerce-Experten und Competitor Insights.'},
+    {id:'rmpo',name:'Retail Media Proof of Performance',desc:'Tracking & Monitoring gebuchter Retail-Media-Maßnahmen mit monatlichem Excel-Report und Clippings.'},
+  ],
+  Amazon: [
+    {id:'apa',name:'Amazon Potenzialanalyse',desc:'Umfassende Potenzialanalyse für alle Marken auf Amazon inkl. Wettbewerberanalyse und Workshop.'},
+    {id:'acm',name:'Channel Management',desc:'Pflege und Monitoring der Amazon-Produktlistungen, SEO, Markenrechte, Brand Store-Update.'},
+    {id:'ake',name:'Kontoerstellung',desc:'Registrierung und Aufbau des Amazon-Kanals über SellerCentral inkl. Markenschreibrechte.'},
+    {id:'amr',name:'Markenregistrierung & Sicherung',desc:'Registrierung und Verknüpfung der ASINs, Meldung von Markenrechtsverstößen.'},
+    {id:'asc',name:'Amazon Support & Consulting',desc:'Amazon-Rundum-Support: Listungspflege, Buybox, SEO, Markenrechte.'},
+    {id:'acu',name:'Amazon Clean-Up',desc:'Bereinigung von unautorisierten Inhalten, fehlerhaften Sellern und Duplikaten auf Amazon.'},
+    {id:'seo',name:'SEO Boost Produktseiten',desc:'SEO-Optimierung: Keywords, Produkttitel, Bullet Points, Produktbeschreibung nach Amazon-Guidelines.'},
+    {id:'pdp',name:'Produktdetailseiten Push',desc:'Optimierung von Titel, Keywords, Bulletpoints und Einpflegen von Packshots und A+ Content.'},
+    {id:'acp',name:'Content Pflege',desc:'Kontinuierliche Pflege und SEO-Anpassungen der Amazon-Produktseiten über 12 Monate.'},
+    {id:'abs',name:'Brand Shop Erstellung & Verwaltung',desc:'Aufbau und laufende Optimierung des Amazon Brand Shops als Landingpage für mehr Conversion.'},
+    {id:'apc',name:'A+ Content',desc:'A+ Content-Erstellung mit Vergleichstabelle, Grafiken und Textmodul für höhere Conversion.'},
+    {id:'appc',name:'A+ Premium Content',desc:'Interaktive Q&As, Hotspots, Videos, Premium-Karussells – für maximale Customer Experience.'},
+    {id:'abst',name:'Brand Story',desc:'Strategische Brand Story für Amazon: Zielgruppenanalyse, Content, Design nach Amazon-Richtlinien.'},
+    {id:'abv',name:'Brand Video',desc:'Konzeption und Erstellung eines Brand Videos mit Storyboard, Effekten und Kanaloptimierung.'},
+    {id:'asi',name:'Secondary Images',desc:'Conversion-optimierte Secondary Images mit Markenbotschaft, USPs und emotionalen Visuals.'},
+    {id:'aegs',name:'Smile AI Empfehlungsgenerierung Amazon',desc:'Aktivierung zufriedener User für Bewertungen auf Amazon über 6–15 Wochen.'},
+    {id:'vine',name:'Vine Empfehlungsgenerierung',desc:'Setup und Management von Amazon Vine für bis zu 30 Bewertungen pro Produkt.'},
+    {id:'awk',name:'Amazon Werbekampagnen',desc:'Sponsored Brands, Video Ads und Sponsored Products mit monatlichem ROAS-Reporting.'},
+    {id:'adsp',name:'Amazon DSP Ads',desc:'Externe Realtime-Werbekampagnen über Amazon DSP mit 15% Agency Fee.'},
+    {id:'inf',name:'Influencer Marketing',desc:'Evaluierung, Briefing und Kampagnenmanagement für Influencer-Kampagnen.'},
+    {id:'dir',name:'Deep Insights Report',desc:'Monatliche ASIN-Auswertungen: Keywords, Rankings, Buybox, Umsätze und Competitor Benchmark.'},
+    {id:'azv',name:'Verkauf auf Amazon',desc:'Vollständige Abwicklung: Wareneinkauf, Lagerbestand, Lieferung und Bestellkommunikation.'},
+    {id:'pvs',name:'Pharmakovigilanz Safety Report',desc:'Automatisiertes 72h-Reporting zu neuen Amazon-Ratings für Pharmakovigilanz-Sicherstellung.'},
+  ],
+  Reporting: [
+    {id:'rd',name:'Report Details',desc:'Kontinuierliche, automatisierte monatliche Reports: Marke, PZN, Shop – vorformatierte Excel-Datei.'},
+    {id:'owb',name:'Onsite WKZ Benchmark',desc:'Monatliches Competitor Benchmarking der Brutto-WKZ-Invests auf E-Pharmacies.'},
+    {id:'dab',name:'Digital Advertising Benchmark',desc:'Wettbewerber-Aktivitäten auf Google.de (Shopping & Ads) und YouTube erstmals verstehen.'},
+    {id:'rop',name:'Reports Onlineapotheken',desc:'Performance-Tracking: Listung, Keywords, Kategorien, Cross-Selling, Bewertungen, PPQ, Preis.'},
+    {id:'gp',name:'Gesamtperformance',desc:'Erkennen von Umsatzpotenzialen durch Händler- & Brand-Analyse: VIS, PPQ, Rabatt in % zum Umsatz.'},
+    {id:'lv',name:'Listung & Verfügbarkeit',desc:'Basis-Check Listung und Produktverfügbarkeit via Ampelfarben-System.'},
+    {id:'kw',name:'Keywords',desc:'Rankingplatz je Shop und PZN zu definierten Keywords mit Suchvolumen-Farbkategorisierung.'},
+    {id:'kat',name:'Kategorien',desc:'Rankingplatz je Shop und PZN zu definierten Kategorien mit Farbkategorisierung.'},
+    {id:'preis',name:'Preise',desc:'Preis-KPIs auf E-Pharmacies, Vergleichsportalen und Amazon in tabellarischer Übersicht.'},
+    {id:'alrt',name:'Alerts',desc:'Automatisierte Push-E-Mail-Benachrichtigungen bei Überschreitung definierter KPI-Grenzen.'},
+    {id:'gsvr',name:'Google Shopping Visibility Report',desc:'Monatlicher/wöchentlicher Report zu Keyword-Platzierungen und Product Listing Ads auf Google Shopping.'},
+    {id:'ecth',name:'E-Commerce To dos & Handlungsempfehlungen',desc:'Handlungsempfehlungen je Shop: Keywords, Kategorien, Cross-Selling, PPQ, 4h Beratungskontingent.'},
+  ],
+  Knowledge: [
+    {id:'sik',name:'Smile Insights+ Knowledge Hub',desc:'Exklusive Pharma Digital Insights: Studien, Executive Briefings, Top-5-News, Workshop-Tickets, Team-Account.'},
+  ],
+  International: [
+    {id:'ebi',name:'ePharma Brand Insights',desc:'Uncovering Potential: Status-Quo-Dashboard, Traffic-Light-System, KPIs VIS/PPQ/Discount je Land.'},
+    {id:'cb',name:'Competitor Benchmark INT',desc:'Identifikation von bis zu 10 Wettbewerbern je eigener Brand als Benchmark für alle KPIs.'},
+    {id:'conn',name:'Conny Shop Connector',desc:'Smart Templates für schnellere Shop-Kommunikation mit AI – personalisiert je Adressat.'},
+    {id:'epma',name:'ePharma Market Analysis',desc:'Detaillierte Analyse der ePharma-Märkte DE/FR/IT/ES/UK mit Wachstumsprognose und Top-5-Retailern.'},
+    {id:'eret',name:'eRetailer Analysis',desc:'Optimale Ressourcenallokation: Traffic-Analyse, Umsatzvergleich, Forecast der Top-5-ePharmacies.'},
+  ]
+};
+
+/* ── Maßnahmen-Cluster-Mapping ── */
+var AM_CLUSTER = {};
+Object.keys(AM_DATA).forEach(function(cat){AM_DATA[cat].forEach(function(m){AM_CLUSTER[m.name]=cat;});});
+
+/* ── Helpers ── */
+function ls(k){return localStorage.getItem(k);}
+function lss(k,v){localStorage.setItem(k,v);}
+function gi(id){return document.getElementById(id);}
+function gv(id){return gi(id).value.trim();}
+function fmtD(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'});}
+function fmtE(v){if(!v)return'—';return Number(v).toLocaleString('de-DE')+' €';}
+function dL(iso){return Math.round((new Date(iso)-new Date())/86400000);}
+function stOf(r){
+  if(!r.vertragsende_iso)return{t:'Unbekannt',c:'binfo',col:'#378ADD'};
+  var d=dL(r.vertragsende_iso);
+  if(d<0)return{t:'Abgelaufen',c:'bdanger',col:'#E24B4A'};
+  if(d<=90)return{t:'Läuft bald ab',c:'bwarn',col:'#EF9F27'};
+  return{t:'Aktiv',c:'bok',col:'#1D9E75'};
+}
+function buildInvest(r){
+  var rhy=r.invest_rhythmus==='monatlich'?'mtl.':'p.a.';
+  var fin=r.invest_final||r.invest,bru=r.invest_brutto;
+  if(!fin&&!bru)return'—';
+  var fa=fin||bru,html='';
+  if(bru&&r.invest_rabatt_prozent&&bru!==fa){
+    html+='<span style="font-size:11px;color:var(--tx3);text-decoration:line-through">'+(r.invest_brutto_label||fmtE(bru))+'</span>';
+    html+=' <span style="font-size:11px;color:var(--green);font-weight:500">-'+r.invest_rabatt_prozent+'%</span><br>';
   }
+  html+='<span style="font-weight:600">'+(r.invest_final_label||r.invest_label||fmtE(fa))+'</span>';
+  html+=' <span style="font-size:10px;color:var(--tx3)">'+rhy+'</span>';
+  return html;
+}
 
-  function buildInvest(r){
-    var rhythmus=r.invest_rhythmus==='monatlich'?'mtl.':'p.a.';
-    var final=r.invest_final||r.invest, brutto=r.invest_brutto;
-    if(!final&&!brutto)return'—';
-    var finalAmt=final||brutto, html='';
-    if(brutto&&r.invest_rabatt_prozent&&brutto!==finalAmt){
-      html+='<span style="font-size:11px;color:var(--text3);text-decoration:line-through">'+(r.invest_brutto_label||fmtE(brutto))+'</span>';
-      html+=' <span style="font-size:11px;color:var(--green);font-weight:500">-'+r.invest_rabatt_prozent+'%</span><br>';
-    }
-    html+='<span style="font-weight:600">'+(r.invest_final_label||r.invest_label||fmtE(finalAmt))+'</span>';
-    html+=' <span style="font-size:10px;color:var(--text3)">'+rhythmus+'</span>';
-    return html;
+/* ── MSAL ── */
+gi('ls').style.display='flex';
+var msalInst=null;
+function initMSAL(){
+  try{
+    msalInst=new msal.PublicClientApplication({
+      auth:{clientId:CLIENT_ID,authority:'https://login.microsoftonline.com/'+TENANT_ID,redirectUri:REDIRECT},
+      cache:{cacheLocation:'sessionStorage',storeAuthStateInCookie:true}
+    });
+    msalInst.handleRedirectPromise().then(function(resp){
+      if(resp&&resp.account){lss('ms_user',JSON.stringify({name:resp.account.name,email:resp.account.username}));showApp();}
+      else{var a=msalInst.getAllAccounts();if(a.length>0){lss('ms_user',JSON.stringify({name:a[0].name,email:a[0].username}));showApp();}}
+    }).catch(function(e){gi('login-err').textContent='Fehler: '+e.message;console.error(e);});
+  }catch(e){gi('login-err').textContent='MSAL Init Fehler: '+e.message;}
+}
+if(typeof msal!=='undefined'){initMSAL();}else{gi('login-err').textContent='Microsoft Auth konnte nicht geladen werden.';}
+function doMSLogin(){if(!msalInst){gi('login-err').textContent='MSAL nicht initialisiert.';return;}try{msalInst.loginRedirect({scopes:['User.Read']});}catch(e){gi('login-err').textContent='Login Fehler: '+e.message;}}
+function doLogout(){localStorage.removeItem('ms_user');sessionStorage.clear();if(msalInst)msalInst.logoutRedirect();else window.location.reload();}
+function showApp(){
+  gi('ls').style.display='none';gi('app').style.display='block';
+  var u=ls('ms_user');if(u){try{var p=JSON.parse(u);gi('uname').textContent='● '+(p.name||p.email);}catch(e){}}
+  SB=window.supabase.createClient(SB_URL,SB_KEY);
+  doLoad();
+}
+
+/* ── Data ── */
+async function doLoad(){
+  var r=await SB.from('kunden').select('*').order('created_at',{ascending:false});
+  if(r.error){toast('Fehler: '+r.error.message);return;}
+  DATA=r.data||[];
+  renderCEO();renderV();renderMatrix();renderFrueh();
+}
+
+/* ── Tabs ── */
+function doTab(t){
+  var tabs=['ceo','vertraege','matrix','frueh','master'];
+  document.querySelectorAll('.tab').forEach(function(b,i){b.classList.toggle('on',tabs[i]===t);});
+  tabs.forEach(function(x){var el=gi('tc-'+x);if(el)el.classList.toggle('on',x===t);});
+  if(t==='master')renderAM();
+}
+
+/* ── CEO ── */
+function renderCEO(){
+  var aktiv=DATA.filter(function(r){var s=stOf(r).t;return s==='Aktiv'||s==='Läuft bald ab';});
+  var total=DATA.reduce(function(a,r){return a+(Number(r.invest_final||r.invest)||0);},0);
+  gi('k1').innerHTML=total.toLocaleString('de-DE')+' € <span class="kbp">+12%</span>';
+  gi('k2').textContent=aktiv.length?Math.round(total/aktiv.length).toLocaleString('de-DE')+' €':'—';
+  gi('k3').textContent=aktiv.length;
+  gi('k4').innerHTML='94% <span class="kbp">+2%</span>';
+  gi('k5').innerHTML=(DATA.length*15000).toLocaleString('de-DE')+' € <span class="kbi">geschätzt</span>';
+  // Pie
+  var kundenMap={};
+  DATA.forEach(function(r){kundenMap[r.kunde]=(kundenMap[r.kunde]||0)+(Number(r.invest_final||r.invest)||0);});
+  var kundenList=Object.entries(kundenMap).sort(function(a,b){return b[1]-a[1];});
+  var leg=gi('pie-leg');
+  leg.innerHTML=kundenList.map(function(kv,i){return'<span><span class="ldot" style="background:'+COLORS[i%COLORS.length]+'"></span>'+kv[0].split(' ').slice(0,2).join(' ')+'</span>';}).join('');
+  if(pieInst)pieInst.destroy();
+  pieInst=new Chart(gi('pieC'),{type:'doughnut',data:{labels:kundenList.map(function(kv){return kv[0].split(' ').slice(0,2).join(' ');}),datasets:[{data:kundenList.map(function(kv){return kv[1];}),backgroundColor:COLORS,borderWidth:2,borderColor:'#F7F6F2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.raw.toLocaleString('de-DE')+' €';}}}}}}); 
+  // Expiring
+  var sorted=[...DATA].filter(function(r){return r.vertragsende_iso;}).sort(function(a,b){return dL(a.vertragsende_iso)-dL(b.vertragsende_iso);});
+  gi('explist').innerHTML=sorted.slice(0,4).map(function(r){
+    var d=dL(r.vertragsende_iso);
+    var col=d<=90?'#E24B4A':d<=180?'#EF9F27':'#1D9E75';
+    var bg=d<=90?'background:#FFE0E0;color:#7B2020':d<=180?'background:#FFF3CD;color:#7B5E1A':'background:#D8F3DC;color:#2D6A4F';
+    return'<div class="exi"><div class="exd" style="background:'+col+'"></div><div style="flex:1"><div style="font-weight:500;font-size:13px">'+r.kunde.split(' ').slice(0,2).join(' ')+'</div><div style="font-size:11px;color:var(--tx3)">Endet am '+fmtD(r.vertragsende_iso)+'</div></div><div style="text-align:right"><div style="font-weight:500;font-size:12px">'+(r.invest_final_label||fmtE(r.invest_final||r.invest))+'</div><span style="'+bg+';font-size:11px;font-weight:500;padding:2px 7px;border-radius:999px;">'+d+' Tage</span></div></div>';
+  }).join('')||'<div class="empty" style="padding:1rem">Keine Daten</div>';
+  // Bar top leistungen
+  var lc={};DATA.forEach(function(r){(r.leistungen||[]).forEach(function(l){lc[l]=(lc[l]||0)+1;});});
+  var top=Object.entries(lc).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
+  if(barInst)barInst.destroy();
+  barInst=new Chart(gi('barC'),{type:'bar',data:{labels:top.map(function(x){return x[0];}),datasets:[{data:top.map(function(x){return x[1];}),backgroundColor:'#1A1916',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
+}
+
+/* ── Vertragsübersicht (eine Zeile pro Vertrag) ── */
+function renderV(){
+  var q=(gv('qsearch')||'').toLowerCase(),fs=gi('qst').value,sc=gi('qso').value;
+  var rows=DATA.filter(function(r){
+    if(q&&!r.kunde.toLowerCase().includes(q)&&!(r.angebotsnr||'').toLowerCase().includes(q))return false;
+    if(fs&&stOf(r).t!==fs)return false;
+    return true;
+  });
+  rows.sort(function(a,b){
+    if(sc==='kunde')return a.kunde.localeCompare(b.kunde,'de');
+    if(sc==='ende')return(a.vertragsende_iso||'9999').localeCompare(b.vertragsende_iso||'9999');
+    if(sc==='invest')return(b.invest_final||b.invest||0)-(a.invest_final||a.invest||0);
+    return 0;
+  });
+  var tb=gi('vtbody');
+  if(!rows.length){tb.innerHTML='<tr><td colspan="10"><div class="empty">Keine Verträge gefunden.</div></td></tr>';return;}
+  tb.innerHTML=rows.map(function(r){
+    var st=stOf(r);
+    var tags=(r.leistungen||[]).map(function(l){return'<span class="tag">'+l+'</span>';}).join('');
+    var verl=r.verlaengerung?'<span style="font-size:11px;color:var(--tx3);display:block;margin-top:2px">+'+r.verlaengerung+' Auto</span>':'';
+    var pdfLink=r.pdf_url?'<a href="'+r.pdf_url+'" target="_blank" style="font-size:11px;color:var(--blue)">📎 Öffnen</a>':'<span style="font-size:11px;color:var(--tx3)">—</span>';
+    return'<tr>'+
+      '<td style="font-weight:500;min-width:160px">'+r.kunde+'<small style="font-weight:400;color:var(--tx3);font-size:11px;display:block;margin-top:2px;font-family:DM Mono,monospace">'+(r.angebotsnr||'')+'</small></td>'+
+      '<td>'+(tags||'<span style="color:var(--tx3)">—</span>')+'</td>'+
+      '<td style="white-space:nowrap;font-size:12px;color:var(--tx2)">'+(r.angebotsdatum||'—')+'</td>'+
+      '<td style="white-space:nowrap">'+(r.vertragsbeginn||'—')+'</td>'+
+      '<td>'+(r.laufzeit||'—')+verl+'</td>'+
+      '<td style="white-space:nowrap">'+(r.vertragsende_iso?fmtD(r.vertragsende_iso):'—')+'</td>'+
+      '<td style="white-space:nowrap">'+buildInvest(r)+'</td>'+
+      '<td><span class="badge '+st.c+'">'+st.t+'</span></td>'+
+      '<td>'+pdfLink+'</td>'+
+      '<td style="white-space:nowrap">'+
+        '<button class="ic" data-id="'+r.id+'" onclick="openEdit(this.dataset.id)">✏️</button>'+
+        '<button class="ic del" data-id="'+r.id+'" onclick="doDelete(this.dataset.id)">🗑</button>'+
+      '</td></tr>';
+  }).join('');
+}
+
+/* ── Leistungsmatrix (eine Zeile pro Kunde, Maßnahmen zusammengeführt) ── */
+function renderMatrix(){
+  var filterCat=gi('mfcat').value;
+  // Kunden deduplizieren
+  var kundenMap={};
+  DATA.forEach(function(r){
+    if(!kundenMap[r.kunde])kundenMap[r.kunde]=new Set();
+    (r.leistungen||[]).forEach(function(l){kundenMap[r.kunde].add(l);});
+  });
+  // Alle Leistungen – optional nach Cluster filtern
+  var allLeistungen=[];
+  if(filterCat){
+    var catMods=AM_DATA[filterCat]?AM_DATA[filterCat].map(function(m){return m.name;}):[];
+    allLeistungen=[...new Set(Object.values(kundenMap).flatMap(function(s){return[...s];}))].filter(function(l){return catMods.includes(l)||AM_CLUSTER[l]===filterCat;}).sort();
+  } else {
+    allLeistungen=[...new Set(Object.values(kundenMap).flatMap(function(s){return[...s];}))].sort();
   }
+  // Maßnahmen-Filter Tags
+  var mfEl=gi('mfilt');
+  var cats=['Analytics','Operativ','Consulting','Amazon','Reporting','Knowledge','International'];
+  var catColors={'Analytics':'#1D9E75','Operativ':'#378ADD','Consulting':'#BA7517','Amazon':'#D85A30','Reporting':'#7F77DD','Knowledge':'#D4537E','International':'#888780'};
+  mfEl.innerHTML='<span style="font-size:12px;color:var(--tx2)">Cluster:</span>'+
+    cats.map(function(c){return'<button class="mftag'+(filterCat===c?' on':'')+'" onclick="gi(\'mfcat\').value=\''+c+'\';renderMatrix()">'+c+'</button>';}).join('')+
+    '<button class="mftag'+(filterCat===''?' on':'')+'" onclick="gi(\'mfcat\').value=\'\';renderMatrix()">Alle</button>';
+  // Stats
+  var totalMods=Object.values(kundenMap).reduce(function(a,s){return a+s.size;},0);
+  var numKunden=Object.keys(kundenMap).length;
+  gi('mmod').textContent=totalMods;
+  gi('mavg').textContent=numKunden?(totalMods/numKunden).toFixed(1):'—';
+  // Table
+  var thead='<tr><th class="kc">Kunde</th>';
+  allLeistungen.forEach(function(l){
+    var cat=AM_CLUSTER[l]||'';
+    var col=catColors[cat]||'#888';
+    thead+='<th style="max-width:90px;white-space:normal;text-align:center;border-top:3px solid '+col+'">'+l+'</th>';
+  });
+  thead+='</tr>';
+  gi('mhead').innerHTML=thead;
+  var tbody='';
+  Object.keys(kundenMap).sort().forEach(function(kunde){
+    var lSet=kundenMap[kunde];
+    tbody+='<tr><td class="kn">'+kunde+'</td>';
+    allLeistungen.forEach(function(l){tbody+='<td>'+(lSet.has(l)?'<span class="mck">✓</span>':'<span class="mem">·</span>')+'</td>';});
+    tbody+='</tr>';
+  });
+  gi('mbody').innerHTML=tbody;
+}
 
-  /* ── MSAL ── */
-  gi('login-screen').style.display='flex';
-  var msalInstance=null;
-  function initMSAL(){
+/* ── Frühwarnsystem ── */
+var FRUEH_FILTER='all';
+function setFruehFilter(f){
+  FRUEH_FILTER=f;
+  document.querySelectorAll('.ac').forEach(function(el){el.classList.remove('on');});
+  if(f!=='all')gi('ac-'+f).classList.add('on');
+  renderFrueh();
+}
+function renderFrueh(){
+  var sorted=[...DATA].sort(function(a,b){return dL(a.vertragsende_iso||'9999-01-01')-dL(b.vertragsende_iso||'9999-01-01');});
+  var red=0,amber=0,green=0;
+  sorted.forEach(function(r){
+    var d=dL(r.vertragsende_iso||'9999-01-01');
+    if(d<=90)red++;else if(d<=180)amber++;else green++;
+  });
+  gi('cr').textContent=red;gi('ca').textContent=amber;gi('cg').textContent=green;
+  var filtered=sorted.filter(function(r){
+    if(FRUEH_FILTER==='all')return true;
+    var d=dL(r.vertragsende_iso||'9999-01-01');
+    if(FRUEH_FILTER==='red')return d<=90;
+    if(FRUEH_FILTER==='amber')return d>90&&d<=180;
+    if(FRUEH_FILTER==='green')return d>180;
+    return true;
+  });
+  var atRisk=sorted.filter(function(r){var d=dL(r.vertragsende_iso||'9999-01-01');return d<=180;});
+  var ban=gi('wban');
+  if(atRisk.length){
+    var rv=atRisk.reduce(function(a,r){return a+(Number(r.invest_final||r.invest)||0);},0);
+    gi('wtit').textContent=atRisk.length+' Verträge benötigen Ihre Aufmerksamkeit';
+    gi('wsub').textContent='Potenzieller Jahresumsatz gefährdet: '+rv.toLocaleString('de-DE')+' €';
+    ban.style.display='flex';
+  }else{ban.style.display='none';}
+  var tb=gi('ftbody');
+  if(!filtered.length){tb.innerHTML='<tr><td colspan="6"><div class="empty">Keine Einträge.</div></td></tr>';return;}
+  tb.innerHTML=filtered.map(function(r){
+    var d=dL(r.vertragsende_iso||'9999-01-01');
+    var col=d<=90?'#E24B4A':d<=180?'#EF9F27':'#1D9E75';
+    var bg=d<=90?'background:#FFE0E0;color:#7B2020':d<=180?'background:#FFF3CD;color:#7B5E1A':'background:#D8F3DC;color:#2D6A4F';
+    var tags=(r.leistungen||[]).slice(0,3).map(function(l){return'<span class="tag">'+l+'</span>';}).join('')+
+      (r.leistungen&&r.leistungen.length>3?'<span class="tag">+'+((r.leistungen.length-3))+'</span>':'');
+    return'<tr>'+
+      '<td style="font-weight:500"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+col+';margin-right:6px"></span>'+r.kunde+'<br><small style="font-weight:400;color:var(--tx3);font-family:DM Mono,monospace;font-size:11px">'+(r.angebotsnr||'')+'</small></td>'+
+      '<td>'+tags+'</td>'+
+      '<td><span style="'+bg+';font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;">'+d+' Tage</span></td>'+
+      '<td style="white-space:nowrap">'+(r.vertragsende_iso?fmtD(r.vertragsende_iso):'—')+'</td>'+
+      '<td style="white-space:nowrap">'+buildInvest(r)+'</td>'+
+      '<td style="white-space:nowrap;display:flex;gap:6px;padding:8px 12px">'+
+        '<button class="abt" onclick="openEdit(\''+r.id+'\')">Details</button>'+
+        '<button class="abt grn" onclick="doTab(\'master\')">Verlängern</button>'+
+      '</td></tr>';
+  }).join('');
+}
+
+/* ── Angebotsmaster ── */
+function renderAM(){
+  var cats=Object.keys(AM_DATA);
+  var sid=gi('am-sidebar');
+  sid.innerHTML=cats.map(function(c){return'<div class="amcat">'+c+'</div><button class="amcatbtn'+(AM_CAT===c?' on':'')+'" onclick="setAMCat(\''+c+'\')">'+c+'</button>';}).join('');
+  renderAMContent();
+}
+function setAMCat(c){AM_CAT=c;renderAM();}
+function renderAMContent(){
+  var items=AM_DATA[AM_CAT]||[];
+  var cont=gi('am-content');
+  cont.innerHTML='<div style="font-size:15px;font-weight:600;margin-bottom:1rem">'+AM_CAT+'</div><div class="amgrid">'+
+    items.map(function(m){
+      var sel=AM_SEL.includes(m.id);
+      return'<div class="amcard'+(sel?' sel':'')+'" onclick="toggleAM(\''+m.id+'\')">'+
+        '<div class="chk">'+(sel?'✓':'')+'</div>'+
+        '<div class="amcname">'+m.name+'</div>'+
+        '<div class="amcdesc">'+m.desc+'</div>'+
+      '</div>';
+    }).join('')+'</div>';
+  updateAMBar();
+}
+function toggleAM(id){
+  var idx=AM_SEL.indexOf(id);
+  if(idx>=0)AM_SEL.splice(idx,1);else AM_SEL.push(id);
+  renderAMContent();
+}
+function clearAMSel(){AM_SEL=[];renderAMContent();}
+function updateAMBar(){
+  gi('am-count').textContent=AM_SEL.length+' ausgewählt';
+  var names=AM_SEL.map(function(id){
+    var found=null;Object.values(AM_DATA).forEach(function(arr){arr.forEach(function(m){if(m.id===id)found=m.name;});});return found;
+  }).filter(Boolean);
+  gi('am-selnames').textContent=names.length?names.slice(0,4).join(', ')+(names.length>4?' +'+((names.length-4))+' weitere':''):'Keine Maßnahmen ausgewählt';
+}
+function openAngebotModal(){
+  if(!AM_SEL.length){toast('Bitte mindestens eine Maßnahme auswählen.');return;}
+  var prev=gi('a-prev');
+  var items=AM_SEL.map(function(id){
+    var found=null;Object.values(AM_DATA).forEach(function(arr){arr.forEach(function(m){if(m.id===id)found=m;});});return found;
+  }).filter(Boolean);
+  prev.innerHTML=items.map(function(m){
+    return'<div class="aprev-row">'+
+      '<div class="aprev-mod">'+m.name+'</div>'+
+      '<div class="aprev-desc">'+m.desc+'</div>'+
+    '</div>';
+  }).join('');
+  gi('amodal').classList.add('on');
+}
+function doExportAngebot(){
+  var kunde=gv('a-kunde'),nr=gv('a-nr'),datum=gv('a-datum'),beginn=gv('a-beginn');
+  var lz=gi('a-lz').value,inv=gv('a-invest'),addr=gv('a-addr'),notiz=gv('a-notiz');
+  if(!kunde){alert('Kundenname ist Pflichtfeld.');return;}
+  var items=AM_SEL.map(function(id){
+    var found=null;Object.values(AM_DATA).forEach(function(arr){arr.forEach(function(m){if(m.id===id)found=m;});});return found;
+  }).filter(Boolean);
+  // Build print-friendly HTML
+  var html='<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Angebot '+kunde+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;font-size:12px;padding:2rem;max-width:900px;margin:0 auto;}'+
+    'h1{font-size:22px;font-weight:bold;text-align:center;margin-bottom:4px;}'+
+    '.sub{text-align:center;font-size:13px;color:#666;margin-bottom:2rem;}'+
+    'table{width:100%;border-collapse:collapse;margin-top:1rem;}'+
+    'th{background:#1A1916;color:#fff;padding:8px 10px;text-align:left;font-size:11px;}'+
+    'td{padding:8px 10px;border-bottom:1px solid #eee;vertical-align:top;}'+
+    '.mod{font-weight:bold;min-width:180px;font-size:12px;}'+
+    '.invest-row{background:#F0EEE8;font-weight:bold;}'+
+    '.details{margin-top:2rem;font-size:11px;color:#444;border-top:1px solid #ddd;padding-top:1rem;}'+
+    'footer{margin-top:3rem;text-align:center;font-size:10px;color:#999;}'+
+    '</style></head><body>'+
+    '<h1>Angebot</h1>'+
+    '<div class="sub">'+
+      '<strong>'+kunde+'</strong><br>'+
+      (addr?addr.replace(/\n/g,'<br>')+'<br>':'')+'<br>'+
+      'Angebotsnummer: '+(nr||'—')+' | Angebotsdatum: '+(datum||'—')+'<br>'+
+      'Vertragsbeginn: '+(beginn||'—')+' | Laufzeit: '+lz+
+    '</div>'+
+    '<table><thead><tr><th>Maßnahme</th><th>Beschreibung</th><th>Plan</th></tr></thead><tbody>'+
+    items.map(function(m){
+      return'<tr><td class="mod">'+m.name+'</td><td>'+m.desc+'</td><td>✓</td></tr>';
+    }).join('')+
+    '<tr class="invest-row"><td colspan="2"><strong>Finaler Invest bei '+lz+' Laufzeit (p.a.)</strong></td><td><strong>'+(inv?Number(inv).toLocaleString('de-DE')+' €':'—')+'</strong></td></tr>'+
+    '</tbody></table>'+
+    (notiz?'<div class="details"><strong>Besondere Konditionen:</strong><br>'+notiz+'</div>':'')+
+    '<div class="details">'+
+      '▪ An dieses Angebot hält sich Smile AI 30 Tage gebunden. Alle Preise exkl. USt.<br>'+
+      '▪ Die Laufzeit des Vertrages beginnt mit dem nächsten Werktag nach Bestelleingang. Reisekosten: Nach Aufwand.<br>'+
+      '▪ Der Vertrag verlängert sich automatisch um 12 Monate wenn nicht 3 Monate vor Laufzeitende gekündigt wird.<br>'+
+      '▪ Angebotsempfänger: '+kunde+(addr?' – '+addr.replace(/\n/g,', '):'')+
+      '<br>▪ Angebot von Smile AI GmbH, Sonnenstr. 14, 80331 München'+
+    '</div>'+
+    '<footer>Smile AI GmbH | Sonnenstr. 14, 80331 München | www.smileai.de</footer>'+
+    '</body></html>';
+  var win=window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(function(){win.print();},500);
+}
+
+/* ── PDF Upload ── */
+async function doPDF(input){
+  var files=Array.from(input.files);if(!files.length)return;input.value='';
+  gi('upmodal').classList.add('on');
+  for(var i=0;i<files.length;i++){
+    setP('Analysiere: '+files[i].name,(i/files.length)*100);
     try{
-      msalInstance=new msal.PublicClientApplication({
-        auth:{clientId:CLIENT_ID,authority:'https://login.microsoftonline.com/'+TENANT_ID,redirectUri:REDIRECT_URI},
-        cache:{cacheLocation:'sessionStorage',storeAuthStateInCookie:true}
-      });
-      msalInstance.handleRedirectPromise().then(function(response){
-        if(response&&response.account){lss('ms_user',JSON.stringify({name:response.account.name,email:response.account.username}));showApp();}
-        else{var a=msalInstance.getAllAccounts();if(a.length>0){lss('ms_user',JSON.stringify({name:a[0].name,email:a[0].username}));showApp();}}
-      }).catch(function(e){gi('login-err').textContent='Fehler: '+e.message;console.error(e);});
-    }catch(e){gi('login-err').textContent='MSAL Init Fehler: '+e.message;console.error(e);}
+      var b64=await toB64(files[i]);
+      var parsed=await doExtract(b64);
+      if(parsed){
+        // Upload PDF to Supabase Storage
+        var pdfUrl=null;
+        try{
+          var fname=Date.now()+'_'+files[i].name.replace(/[^a-zA-Z0-9._-]/g,'_');
+          var up=await SB.storage.from('vertraege').upload(fname,files[i],{contentType:'application/pdf',upsert:false});
+          if(!up.error){
+            var pub=SB.storage.from('vertraege').getPublicUrl(fname);
+            pdfUrl=pub.data.publicUrl;
+          }
+        }catch(e){console.warn('PDF upload failed:',e);}
+        var row={
+          kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
+          vertragsbeginn:parsed.vertragsbeginn,laufzeit:parsed.laufzeit,laufzeit_monate:parsed.laufzeit_monate||12,
+          verlaengerung:parsed.verlaengerung||'12 Monate',vertragsende_iso:parsed.vertragsende_iso||null,
+          invest_brutto:parsed.invest_brutto||null,invest_brutto_label:parsed.invest_brutto_label||null,
+          invest_rabatt_prozent:parsed.invest_rabatt_prozent||null,invest_final:parsed.invest_final||null,
+          invest_final_label:parsed.invest_final_label||null,invest_rhythmus:parsed.invest_rhythmus||'jaehrlich',
+          invest:parsed.invest_final||parsed.invest||null,invest_label:parsed.invest_final_label||parsed.invest_label||null,
+          leistungen:parsed.leistungen||[],notiz:parsed.notiz||''
+        };
+        if(pdfUrl)row.pdf_url=pdfUrl;
+        var ins=await SB.from('kunden').insert([row]);
+        if(ins.error)throw new Error(ins.error.message);
+        await doLoad();toast('✓ '+parsed.kunde+' hinzugefügt');
+      }
+    }catch(e){toast('Fehler: '+e.message);}
   }
-  if(typeof msal!=='undefined'){initMSAL();}else{gi('login-err').textContent='Microsoft Auth konnte nicht geladen werden.';}
-  function doMSLogin(){if(!msalInstance){gi('login-err').textContent='MSAL nicht initialisiert.';return;}try{msalInstance.loginRedirect({scopes:['User.Read']});}catch(e){gi('login-err').textContent='Login Fehler: '+e.message;}}
-  function doLogout(){localStorage.removeItem('ms_user');sessionStorage.clear();if(msalInstance)msalInstance.logoutRedirect();else window.location.reload();}
-  function showApp(){
-    gi('login-screen').style.display='none';gi('app').style.display='block';
-    var u=ls('ms_user');if(u){try{var p=JSON.parse(u);gi('user-name').textContent='● '+(p.name||p.email);}catch(e){}}
-    doInit();
-  }
+  setP('Fertig',100);setTimeout(function(){gi('upmodal').classList.remove('on');},800);
+}
+function setP(t,p){gi('uprog').textContent=t;gi('ubar').style.width=p+'%';}
+function toB64(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=function(){rej(new Error('Lesefehler'));};r.readAsDataURL(file);});}
 
-  /* ── Supabase ── */
-  async function doInit(){SB=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);await doLoad();}
-  async function doLoad(){
-    var r=await SB.from('kunden').select('*').order('created_at',{ascending:false});
-    if(r.error){toast('Fehler: '+r.error.message);return;}
-    DATA=r.data||[];
-    renderAll();
-  }
-  function renderAll(){renderCEO();renderListe();renderMatrix();renderFrueh();}
+/* ── Anthropic via Netlify Proxy ── */
+async function doExtract(b64){
+  var resp=await fetch('/api/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:[
+      {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
+      {type:'text',text:'Du analysierst ein Smile AI Angebotsdokument.\nAntworte NUR mit validem JSON. Kein Markdown.\n\n1. KUNDE: Nach "Angebotsempfaenger:" oder "Angebot fuer:". Nur Firmenname. Niemals "Smile AI GmbH" oder "Dr. Kaske GmbH".\n2. ANGEBOTSNR & DATUM: Nach "Angebotsnummer:" und "Angebotsdatum:". Exakt kopieren.\n3. LEISTUNGEN: Modulnamen 1:1 aus der linken Tabellenspalte. Kategoriezeilen weglassen.\n4. INVEST: Kurz vor/nach "Details:" alle Euro-Betraege. Letzte/kleinste=invest_final. invest_rhythmus: "monatlich" oder "jaehrlich".\n5. LAUFZEIT: Aus "bei X Monaten Laufzeit".\n6. VERTRAGSBEGINN: Aus "Laufzeit des Vertrages beginnt...".\n\n{"kunde":"","angebotsnr":"","angebotsdatum":"","vertragsbeginn":"","laufzeit":"","laufzeit_monate":12,"verlaengerung":"12 Monate","vertragsende_iso":null,"leistungen":[],"invest_brutto":0,"invest_brutto_label":"","invest_rabatt_prozent":null,"invest_final":0,"invest_final_label":"","invest_rhythmus":"jaehrlich","notiz":""}'}
+    ]}]})
+  });
+  if(!resp.ok){var e=await resp.json().catch(function(){return{};});throw new Error(e.error&&e.error.message?e.error.message:'Proxy Fehler '+resp.status);}
+  var j=await resp.json();
+  var txt=(j.content&&j.content[0]&&j.content[0].text)||'';
+  var clean=txt.replace(/```json|```/g,'').trim();
+  try{return JSON.parse(clean);}catch(e){throw new Error('Claude Antwort ungueltig: '+clean.slice(0,150));}
+}
 
-  /* ── CEO Dashboard ── */
-  function renderCEO(){
-    var aktiv=DATA.filter(r=>statusOf(r).t==='Aktiv'||statusOf(r).t==='Läuft bald ab');
-    var total=DATA.reduce(function(a,r){return a+(Number(r.invest_final||r.invest)||0);},0);
-    var avg=aktiv.length?Math.round(total/aktiv.length):0;
-    gi('kpi-umsatz').innerHTML=total.toLocaleString('de-DE')+' €<span class="kpi-badge pos-badge" style="font-size:11px">+12%</span>';
-    gi('kpi-avg').textContent=avg.toLocaleString('de-DE')+' €';
-    gi('kpi-aktiv').textContent=aktiv.length;
-    gi('kpi-quote').innerHTML='94% <span class="kpi-badge pos-badge" style="font-size:11px">+2%</span>';
-    var upsell=DATA.length*15000;
-    gi('kpi-upsell').innerHTML=upsell.toLocaleString('de-DE')+' € <span class="kpi-badge info-badge" style="font-size:10px">geschätzt</span>';
+/* ── Modal Add/Edit ── */
+function renderLTags(){gi('ltags').innerHTML=getL().map(function(l,i){return'<span class="ltag">'+l+'<button onclick="removeL('+i+')" title="Entfernen">×</button></span>';}).join('');}
+function getL(){var raw=gi('fleis').value;return raw?raw.split('\n').map(function(s){return s.trim();}).filter(Boolean):[];}
+function setL(arr){gi('fleis').value=arr.join('\n');renderLTags();}
+function addL(){var inp=gi('lnew'),val=inp.value.trim();if(!val)return;var arr=getL();if(!arr.includes(val)){arr.push(val);setL(arr);}inp.value='';}
+function removeL(idx){var arr=getL();arr.splice(idx,1);setL(arr);}
+function openAdd(){
+  gi('ftit').textContent='Vertrag hinzufügen';gi('fid').value='';
+  ['fkunde','fnr','fdatum','fbeg','finv','fnotiz'].forEach(function(id){gi(id).value='';});
+  gi('fende').value='';gi('flz').value='12 Monate';setL([]);
+  gi('fpdf-link').style.display='none';gi('fmodal').classList.add('on');
+}
+function openEdit(id){
+  var r=DATA.find(function(x){return x.id===id;});if(!r)return;
+  gi('ftit').textContent='Vertrag bearbeiten';gi('fid').value=id;
+  gi('fkunde').value=r.kunde||'';gi('fnr').value=r.angebotsnr||'';gi('fdatum').value=r.angebotsdatum||'';
+  gi('fbeg').value=r.vertragsbeginn||'';gi('flz').value=r.laufzeit||'12 Monate';
+  gi('fende').value=r.vertragsende_iso||'';gi('finv').value=r.invest_final||r.invest||'';
+  setL(r.leistungen||[]);gi('fnotiz').value=r.notiz||'';
+  var pl=gi('fpdf-link');
+  if(r.pdf_url){pl.style.display='block';pl.innerHTML='<a href="'+r.pdf_url+'" target="_blank">📎 Hochgeladener Vertrag öffnen</a>';}
+  else{pl.style.display='none';}
+  gi('fmodal').classList.add('on');
+}
+async function doSave(){
+  var id=gi('fid').value,kunde=gv('fkunde');if(!kunde){alert('Kundenname ist Pflichtfeld.');return;}
+  var lz=gi('flz').value,inv=parseFloat(gi('finv').value)||null;
+  var row={kunde:kunde,angebotsnr:gv('fnr'),angebotsdatum:gv('fdatum'),vertragsbeginn:gv('fbeg'),
+    laufzeit:lz,laufzeit_monate:parseInt(lz)||12,verlaengerung:'12 Monate',
+    vertragsende_iso:gi('fende').value||null,invest:inv,invest_final:inv,
+    invest_label:null,invest_final_label:null,leistungen:getL(),notiz:gv('fnotiz')};
+  var res=id?await SB.from('kunden').update(row).eq('id',id):await SB.from('kunden').insert([row]);
+  if(res.error){toast('Fehler: '+res.error.message);return;}
+  closeModal();await doLoad();toast(id?'✓ Aktualisiert':'✓ Hinzugefügt');
+}
+async function doDelete(id){
+  if(!confirm('Vertrag wirklich löschen?'))return;
+  var r=DATA.find(function(x){return x.id===id;});
+  if(r&&r.pdf_url){try{var fname=r.pdf_url.split('/').pop();await SB.storage.from('vertraege').remove([fname]);}catch(e){}}
+  var res=await SB.from('kunden').delete().eq('id',id);
+  if(res.error){toast('Fehler: '+res.error.message);return;}
+  await doLoad();toast('Vertrag gelöscht');
+}
+function closeModal(){gi('fmodal').classList.remove('on');}
 
-    // Pie chart
-    var labels=DATA.map(function(r){return r.kunde.split(' ').slice(0,2).join(' ');});
-    var vals=DATA.map(function(r){return Number(r.invest_final||r.invest)||0;});
-    var legEl=gi('pie-legend');
-    legEl.innerHTML=DATA.map(function(r,i){
-      return'<span><span class="ldot" style="background:'+CHART_COLORS[i%CHART_COLORS.length]+'"></span>'+r.kunde.split(' ').slice(0,2).join(' ')+'</span>';
-    }).join('');
-    if(pieChartInst){pieChartInst.destroy();}
-    pieChartInst=new Chart(gi('pieChart'),{
-      type:'doughnut',
-      data:{labels:labels,datasets:[{data:vals,backgroundColor:CHART_COLORS,borderWidth:2,borderColor:'#F7F6F2'}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.raw.toLocaleString('de-DE')+' €';}}}}}
-    });
+/* ── CSV ── */
+function doCSV(){
+  var h=['Kunde','Angebotsnr','Angebotsdatum','Vertragsbeginn','Laufzeit','Vertragsende','Invest','Status','Leistungen','Notiz'];
+  var rows=DATA.map(function(r){var st=stOf(r);return[r.kunde,r.angebotsnr,r.angebotsdatum,r.vertragsbeginn,r.laufzeit,r.vertragsende_iso?fmtD(r.vertragsende_iso):'',r.invest_final_label||fmtE(r.invest_final||r.invest),st.t,(r.leistungen||[]).join(' | '),r.notiz].map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');});
+  var csv=[h.join(',')].concat(rows).join('\n');
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='dealdesk_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
 
-    // Expiring
-    var sorted=[...DATA].sort(function(a,b){return daysLeft(a.vertragsende_iso||'9999-01-01')-daysLeft(b.vertragsende_iso||'9999-01-01');});
-    var expEl=gi('expiring-list');
-    expEl.innerHTML=sorted.slice(0,4).map(function(r){
-      var d=daysLeft(r.vertragsende_iso||'9999-01-01');
-      var col=d<=90?'#E24B4A':d<=180?'#EF9F27':'#1D9E75';
-      var bgcls=d<=90?'background:#FFE0E0;color:#7B2020':d<=180?'background:#FFF3CD;color:#7B5E1A':'background:#D8F3DC;color:#2D6A4F';
-      return'<div class="exp-item"><div class="exp-dot" style="background:'+col+'"></div><div style="flex:1"><div class="exp-name">'+r.kunde.split(' ').slice(0,2).join(' ')+'</div><div style="font-size:11px;color:var(--text3)">Endet am '+fmtD(r.vertragsende_iso)+'</div></div><div style="text-align:right"><div style="font-weight:500;font-size:12px">'+(r.invest_final_label||fmtE(r.invest_final||r.invest))+'</div><span class="exp-days" style="'+bgcls+'">'+d+' Tage</span></div></div>';
-    }).join('');
-
-    // Bar chart - top leistungen
-    var lCount={};
-    DATA.forEach(function(r){(r.leistungen||[]).forEach(function(l){lCount[l]=(lCount[l]||0)+1;});});
-    var top5=Object.entries(lCount).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
-    if(barChartInst){barChartInst.destroy();}
-    barChartInst=new Chart(gi('barChart'),{
-      type:'bar',
-      data:{labels:top5.map(function(x){return x[0];}),datasets:[{data:top5.map(function(x){return x[1];}),backgroundColor:'#1A1916',borderRadius:4}]},
-      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}
-    });
-  }
-
-  /* ── Kundenübersicht ── */
-  function renderListe(){
-    var q=(gv('qsearch')||'').toLowerCase(),fs=gi('qstatus').value,sc=gi('qsort').value;
-    var rows=DATA.filter(function(r){
-      if(q&&!r.kunde.toLowerCase().includes(q))return false;
-      if(fs&&statusOf(r).t!==fs)return false;
-      return true;
-    });
-    rows.sort(function(a,b){
-      if(sc==='kunde')return a.kunde.localeCompare(b.kunde,'de');
-      if(sc==='ende')return(a.vertragsende_iso||'9999').localeCompare(b.vertragsende_iso||'9999');
-      if(sc==='invest')return(b.invest_final||b.invest||0)-(a.invest_final||a.invest||0);
-      return 0;
-    });
-    var tb=gi('tbody');
-    if(!rows.length){tb.innerHTML='<tr><td colspan="9"><div class="empty">Keine Einträge gefunden.</div></td></tr>';return;}
-    tb.innerHTML=rows.map(function(r){
-      var st=statusOf(r);
-      var tags=(r.leistungen||[]).map(function(l){return'<span class="tag">'+l+'</span>';}).join('');
-      var verl=r.verlaengerung?'<span style="font-size:11px;color:var(--text3);display:block;margin-top:2px">+'+r.verlaengerung+' Auto</span>':'';
-      return'<tr>'+
-        '<td style="font-weight:500;min-width:160px">'+r.kunde+'<small style="font-weight:400;color:var(--text3);font-size:11px;display:block;margin-top:2px;font-family:DM Mono,monospace">'+(r.angebotsnr||'')+'</small></td>'+
-        '<td>'+(tags||'<span style="color:var(--text3)">—</span>')+'</td>'+
-        '<td style="white-space:nowrap;font-size:12px;color:var(--text2)">'+(r.angebotsdatum||'—')+'</td>'+
-        '<td style="white-space:nowrap">'+(r.vertragsbeginn||'—')+'</td>'+
-        '<td>'+(r.laufzeit||'—')+verl+'</td>'+
-        '<td style="white-space:nowrap">'+(r.vertragsende_iso?fmtD(r.vertragsende_iso):'—')+'</td>'+
-        '<td style="white-space:nowrap">'+buildInvest(r)+'</td>'+
-        '<td><span class="badge '+st.c+'">'+st.t+'</span></td>'+
-        '<td style="white-space:nowrap">'+
-          '<button class="ic" data-id="'+r.id+'" onclick="openEdit(this.dataset.id)">✏️</button>'+
-          '<button class="ic del" data-id="'+r.id+'" onclick="doDelete(this.dataset.id)">🗑</button>'+
-        '</td></tr>';
-    }).join('');
-  }
-
-  /* ── Matrix ── */
-  function renderMatrix(){
-    var showP=gi('showPrices').checked, mf=gi('mfilter').value;
-    var allL=[...new Set(DATA.flatMap(function(r){return r.leistungen||[];}))].sort();
-    var rows=DATA;
-    if(mf==='active')rows=DATA.filter(function(r){var st=statusOf(r).t;return st==='Aktiv'||st==='Läuft bald ab';});
-    var totalMods=DATA.reduce(function(a,r){return a+(r.leistungen||[]).length;},0);
-    gi('mat-pot').textContent=(DATA.length*15000).toLocaleString('de-DE')+' €';
-    gi('mat-mod').textContent=totalMods;
-    gi('mat-avg').textContent=DATA.length?(totalMods/DATA.length).toFixed(1):'—';
-    var thead='<tr><th class="kc">Kunde</th>';
-    allL.forEach(function(l){thead+='<th style="max-width:100px;white-space:normal;text-align:center">'+l+'</th>';});
-    thead+='<th>Invest</th><th>Potenzial</th></tr>';
-    gi('mhead').innerHTML=thead;
-    var tbody='';
-    rows.forEach(function(r){
-      tbody+='<tr><td class="kn">'+r.kunde+'<small>'+(r.angebotsnr||'')+'</small></td>';
-      allL.forEach(function(l){tbody+='<td>'+((r.leistungen||[]).includes(l)?'<span class="mchk">✓</span>':'<span class="mempty">·</span>')+'</td>';});
-      tbody+='<td style="font-size:12px;white-space:nowrap">'+(showP?buildInvest(r):'—')+'</td>';
-      tbody+='<td><span class="pot-badge">+'+((r.invest_final||r.invest||0)*0.15|0).toLocaleString('de-DE')+' €</span></td></tr>';
-    });
-    gi('mbody').innerHTML=tbody;
-  }
-
-  /* ── Frühwarnsystem ── */
-  function renderFrueh(){
-    var sorted=[...DATA].sort(function(a,b){
-      return daysLeft(a.vertragsende_iso||'9999-01-01')-daysLeft(b.vertragsende_iso||'9999-01-01');
-    });
-    var red=0,amber=0,green=0;
-    var tbHtml='';
-    sorted.forEach(function(r){
-      var d=daysLeft(r.vertragsende_iso||'9999-01-01');
-      var col,cls,bgcls;
-      if(d<=90){red++;col='#E24B4A';cls='bdanger';bgcls='background:#FFE0E0;color:#7B2020';}
-      else if(d<=180){amber++;col='#EF9F27';cls='bwarn';bgcls='background:#FFF3CD;color:#7B5E1A';}
-      else{green++;col='#1D9E75';cls='bok';bgcls='background:#D8F3DC;color:#2D6A4F';}
-      var tags=(r.leistungen||[]).slice(0,3).map(function(l){return'<span class="tag">'+l+'</span>';}).join('')+
-        (r.leistungen&&r.leistungen.length>3?'<span class="tag">+'+((r.leistungen.length-3))+'</span>':'');
-      tbHtml+='<tr>'+
-        '<td style="font-weight:500"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+col+';margin-right:6px;"></span>'+r.kunde+'<br><small style="font-weight:400;color:var(--text3);font-family:DM Mono,monospace;font-size:11px">'+(r.angebotsnr||'')+'</small></td>'+
-        '<td>'+tags+'</td>'+
-        '<td><span style="'+bgcls+';font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;">'+d+' Tage</span></td>'+
-        '<td style="white-space:nowrap">'+(r.vertragsende_iso?fmtD(r.vertragsende_iso):'—')+'</td>'+
-        '<td style="white-space:nowrap">'+buildInvest(r)+'</td>'+
-        '<td style="white-space:nowrap;display:flex;gap:6px;padding:8px 14px">'+
-          '<button class="act-btn" onclick="openEdit(\''+r.id+'\')">Details</button>'+
-          '<button class="act-btn grn">Verlängern</button>'+
-        '</td></tr>';
-    });
-    gi('cnt-red').textContent=red;
-    gi('cnt-amber').textContent=amber;
-    gi('cnt-green').textContent=green;
-    gi('frueh-tbody').innerHTML=tbHtml||'<tr><td colspan="6"><div class="empty">Keine Daten</div></td></tr>';
-    var atRisk=sorted.filter(function(r){var d=daysLeft(r.vertragsende_iso||'9999-01-01');return d<=180;});
-    var banner=gi('warn-banner');
-    if(atRisk.length){
-      var riskVal=atRisk.reduce(function(a,r){return a+(Number(r.invest_final||r.invest)||0);},0);
-      gi('warn-title').textContent=atRisk.length+' Verträge benötigen Ihre Aufmerksamkeit';
-      gi('warn-sub').textContent='Potenzieller Jahresumsatz gefährdet: '+riskVal.toLocaleString('de-DE')+' €';
-      banner.style.display='flex';
-    } else {banner.style.display='none';}
-  }
-
-  /* ── Tabs ── */
-  function doTab(tab){
-    var tabs=['ceo','liste','matrix','frueh'];
-    document.querySelectorAll('.tab').forEach(function(b,i){b.classList.toggle('on',tabs[i]===tab);});
-    tabs.forEach(function(t){var el=gi('tc-'+t);if(el)el.classList.toggle('on',t===tab);});
-  }
-
-  /* ── PDF Upload ── */
-  async function doPDF(input){
-    var files=Array.from(input.files);if(!files.length)return;input.value='';
-    gi('upmodal').classList.add('on');
-    for(var i=0;i<files.length;i++){
-      setP('Analysiere: '+files[i].name,(i/files.length)*100);
-      try{
-        var b64=await toB64(files[i]);
-        var parsed=await doExtract(b64);
-        if(parsed){
-          var row={kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
-            vertragsbeginn:parsed.vertragsbeginn,laufzeit:parsed.laufzeit,laufzeit_monate:parsed.laufzeit_monate||12,
-            verlaengerung:parsed.verlaengerung||'12 Monate',vertragsende_iso:parsed.vertragsende_iso||null,
-            invest_brutto:parsed.invest_brutto||null,invest_brutto_label:parsed.invest_brutto_label||null,
-            invest_rabatt_prozent:parsed.invest_rabatt_prozent||null,invest_final:parsed.invest_final||null,
-            invest_final_label:parsed.invest_final_label||null,invest_rhythmus:parsed.invest_rhythmus||'jaehrlich',
-            invest:parsed.invest_final||parsed.invest||null,invest_label:parsed.invest_final_label||parsed.invest_label||null,
-            leistungen:parsed.leistungen||[],notiz:parsed.notiz||''};
-          var ins=await SB.from('kunden').insert([row]);
-          if(ins.error)throw new Error(ins.error.message);
-          await doLoad();toast('✓ '+parsed.kunde+' hinzugefügt');
-        }
-      }catch(e){toast('Fehler: '+e.message);}
-    }
-    setP('Fertig',100);setTimeout(function(){gi('upmodal').classList.remove('on');},800);
-  }
-  function setP(t,p){gi('uprog').textContent=t;gi('ubar').style.width=p+'%';}
-  function toB64(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=function(){rej(new Error('Lesefehler'));};r.readAsDataURL(file);});}
-
-  /* ── Anthropic via Netlify Proxy ── */
-  async function doExtract(b64){
-    var resp=await fetch('/api/anthropic',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:1500,
-        messages:[{role:'user',content:[
-          {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
-          {type:'text',text:'Du analysierst ein Smile AI Angebotsdokument.\nAntworte NUR mit validem JSON. Kein Markdown.\n\n1. KUNDE: Nach "Angebotsempfaenger:" oder "Angebot fuer:". Nur Firmenname. Niemals "Smile AI GmbH" oder "Dr. Kaske GmbH".\n2. ANGEBOTSNR & DATUM: Nach "Angebotsnummer:" und "Angebotsdatum:". Exakt kopieren.\n3. LEISTUNGEN: Modulnamen 1:1 aus der linken Tabellenspalte. Kategoriezeilen weglassen. Mehrzeilige Namen zusammenfuegen.\n4. INVEST: Kurz vor/nach "Details:" alle Euro-Betraege. Letzte/kleinste=invest_final. Erste/groesste=invest_brutto. invest_rhythmus: "monatlich" oder "jaehrlich".\n5. LAUFZEIT: Aus "bei X Monaten Laufzeit".\n6. VERTRAGSBEGINN: Aus "Laufzeit des Vertrages beginnt...".\n\n{"kunde":"","angebotsnr":"","angebotsdatum":"","vertragsbeginn":"","laufzeit":"","laufzeit_monate":12,"verlaengerung":"12 Monate","vertragsende_iso":null,"leistungen":[],"invest_brutto":0,"invest_brutto_label":"","invest_rabatt_prozent":null,"invest_final":0,"invest_final_label":"","invest_rhythmus":"jaehrlich","notiz":""}'}
-        ]}]
-      })
-    });
-    if(!resp.ok){var e=await resp.json().catch(function(){return{};});throw new Error(e.error&&e.error.message?e.error.message:'Proxy Fehler '+resp.status);}
-    var j=await resp.json();
-    var txt=(j.content&&j.content[0]&&j.content[0].text)||'';
-    var clean=txt.replace(/```json|```/g,'').trim();
-    try{return JSON.parse(clean);}catch(e){throw new Error('Claude Antwort ungueltig: '+clean.slice(0,150));}
-  }
-
-  /* ── Modal Add/Edit ── */
-  function renderLTags(){gi('ltags').innerHTML=getLeistungen().map(function(l,i){return'<span class="ltag">'+l+'<button onclick="removeLeistung('+i+')" title="Entfernen">×</button></span>';}).join('');}
-  function getLeistungen(){var raw=gi('fleistungen').value;return raw?raw.split('\n').map(function(s){return s.trim();}).filter(Boolean):[];}
-  function setLeistungen(arr){gi('fleistungen').value=arr.join('\n');renderLTags();}
-  function addLeistung(){var inp=gi('lnew'),val=inp.value.trim();if(!val)return;var arr=getLeistungen();if(!arr.includes(val)){arr.push(val);setLeistungen(arr);}inp.value='';}
-  function removeLeistung(idx){var arr=getLeistungen();arr.splice(idx,1);setLeistungen(arr);}
-  function openAdd(){gi('ftitle').textContent='Kunde hinzufügen';gi('fid').value='';['fkunde','fnr','fdatum','fbeginn','finvest','fnotiz'].forEach(function(id){gi(id).value='';});gi('fende').value='';setLeistungen([]);gi('fmodal').classList.add('on');}
-  function openEdit(id){
-    var r=DATA.find(function(x){return x.id===id;});if(!r)return;
-    gi('ftitle').textContent='Eintrag bearbeiten';gi('fid').value=id;
-    gi('fkunde').value=r.kunde||'';gi('fnr').value=r.angebotsnr||'';gi('fdatum').value=r.angebotsdatum||'';
-    gi('fbeginn').value=r.vertragsbeginn||'';gi('flaufzeit').value=r.laufzeit||'12 Monate';
-    gi('fende').value=r.vertragsende_iso||'';gi('finvest').value=r.invest_final||r.invest||'';
-    setLeistungen(r.leistungen||[]);gi('fnotiz').value=r.notiz||'';gi('fmodal').classList.add('on');
-  }
-  async function doSave(){
-    var id=gi('fid').value,kunde=gv('fkunde');if(!kunde){alert('Kundenname ist Pflichtfeld.');return;}
-    var lz=gi('flaufzeit').value,inv=parseFloat(gi('finvest').value)||null;
-    var row={kunde:kunde,angebotsnr:gv('fnr'),angebotsdatum:gv('fdatum'),vertragsbeginn:gv('fbeginn'),
-      laufzeit:lz,laufzeit_monate:parseInt(lz)||12,verlaengerung:'12 Monate',
-      vertragsende_iso:gi('fende').value||null,invest:inv,invest_final:inv,
-      invest_label:null,invest_final_label:null,leistungen:getLeistungen(),notiz:gv('fnotiz')};
-    var res=id?await SB.from('kunden').update(row).eq('id',id):await SB.from('kunden').insert([row]);
-    if(res.error){toast('Fehler: '+res.error.message);return;}
-    closeModal();await doLoad();toast(id?'✓ Aktualisiert':'✓ Hinzugefügt');
-  }
-  async function doDelete(id){
-    if(!confirm('Eintrag wirklich löschen?'))return;
-    var res=await SB.from('kunden').delete().eq('id',id);
-    if(res.error){toast('Fehler: '+res.error.message);return;}
-    await doLoad();toast('Eintrag gelöscht');
-  }
-  function closeModal(){gi('fmodal').classList.remove('on');}
-
-  /* ── CSV ── */
-  function doCSV(){
-    var h=['Kunde','Angebotsnr','Angebotsdatum','Vertragsbeginn','Laufzeit','Vertragsende','Invest','Rabatt %','Status','Leistungen','Notiz'];
-    var rows=DATA.map(function(r){var st=statusOf(r);return[r.kunde,r.angebotsnr,r.angebotsdatum,r.vertragsbeginn,r.laufzeit,r.vertragsende_iso?fmtD(r.vertragsende_iso):'',r.invest_final_label||fmtE(r.invest_final||r.invest),r.invest_rabatt_prozent?r.invest_rabatt_prozent+'%':'',st.t,(r.leistungen||[]).join(' | '),r.notiz].map(function(v){return'"'+String(v||'').replace(/"/g,'""')+'"';}).join(',');});
-    var csv=[h.join(',')].concat(rows).join('\n');
-    var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='dealdesk_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-  }
-
-  /* ── Toast ── */
-  function toast(msg){var n=gi('notify');n.textContent=msg;n.classList.add('on');setTimeout(function(){n.classList.remove('on');},2800);}
-
-  document.querySelectorAll('.mbg').forEach(function(bg){bg.addEventListener('click',function(e){if(e.target===bg)bg.classList.remove('on');});});
+/* ── Toast ── */
+function toast(msg){var n=gi('notify');n.textContent=msg;n.classList.add('on');setTimeout(function(){n.classList.remove('on');},2800);}
+document.querySelectorAll('.mbg').forEach(function(bg){bg.addEventListener('click',function(e){if(e.target===bg)bg.classList.remove('on');});});
 </script>
 </body>
 </html>
