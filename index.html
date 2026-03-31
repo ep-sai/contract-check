@@ -61,8 +61,11 @@
     .toolbar input{width:200px;}
     .tcard{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;}
     .twrap{overflow-x:auto;}
-    table{width:100%;border-collapse:collapse;font-size:13px;}
-    thead th{background:var(--sur2);color:var(--tx2);font-weight:500;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bdr);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
+    thead th{background:var(--sur2);color:var(--tx2);font-weight:500;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bdr);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;cursor:pointer;user-select:none;}
+    thead th:hover{background:var(--bdr);}
+    thead th.sort-asc::after{content:" ↑";color:var(--ac);}
+    thead th.sort-desc::after{content:" ↓";color:var(--ac);}
     td{padding:11px 12px;border-bottom:1px solid var(--bdr);vertical-align:top;}
     tr:last-child td{border-bottom:none;}
     tr:hover td{background:#FAFAF8;}
@@ -181,7 +184,7 @@
     <button class="tbtn" onclick="doLogout()" title="Abmelden">↩</button>
   </div>
   <div class="tabs">
-    <button class="tab on" onclick="doTab('ceo')">📊 CEO Dashboard</button>
+    <button class="tab on" onclick="doTab('ceo')">📊 Dashboard</button>
     <button class="tab" onclick="doTab('vertraege')">Vertragsübersicht</button>
     <button class="tab" onclick="doTab('matrix')">Leistungsmatrix</button>
     <button class="tab" onclick="doTab('frueh')">⚠ Frühwarnsystem</button>
@@ -191,12 +194,39 @@
 
     <!-- CEO -->
     <div id="tc-ceo" class="tc on">
+      <style>
+        .kpi{position:relative;}
+        .kinfo{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--bdr2);color:var(--tx3);font-size:10px;font-weight:600;cursor:help;margin-left:5px;flex-shrink:0;vertical-align:middle;}
+        .ktooltip{visibility:hidden;opacity:0;position:absolute;left:0;top:calc(100% + 8px);background:var(--tx);color:var(--acfg);font-size:11px;line-height:1.6;padding:10px 12px;border-radius:var(--r);width:240px;z-index:50;pointer-events:none;transition:opacity .15s;font-weight:400;}
+        .kpi:hover .ktooltip{visibility:visible;opacity:1;}
+        .ktooltip::before{content:'';position:absolute;top:-5px;left:16px;width:10px;height:10px;background:var(--tx);transform:rotate(45deg);}
+      </style>
       <div class="kgrid">
-        <div class="kpi"><div class="kl">Jahresumsatz</div><div class="kv" id="k1">—</div></div>
-        <div class="kpi"><div class="kl">Ø Vertragswert</div><div class="kv" id="k2">—</div></div>
-        <div class="kpi"><div class="kl">Aktive Verträge</div><div class="kv" id="k3">—</div></div>
-        <div class="kpi"><div class="kl">Verlängerungsquote</div><div class="kv" id="k4">—</div></div>
-        <div class="kpi"><div class="kl">Upsell-Potenzial</div><div class="kv" id="k5" style="color:var(--blue)">—</div></div>
+        <div class="kpi">
+          <div class="kl">Jahresumsatz <span class="kinfo">i</span></div>
+          <div class="kv" id="k1">—</div>
+          <div class="ktooltip">Summe aller finalen Invest-Werte (invest_final) über alle Verträge in der Datenbank. Monatliche Werte werden hochgerechnet (×12). Trend +12% ist ein Beispielwert.</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Ø Vertragswert <span class="kinfo">i</span></div>
+          <div class="kv" id="k2">—</div>
+          <div class="ktooltip">Jahresumsatz geteilt durch die Anzahl aktiver Verträge (Status "Aktiv" oder "Läuft bald ab"). Gibt den durchschnittlichen Wert pro Kundenvertrag an.</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Aktive Verträge <span class="kinfo">i</span></div>
+          <div class="kv" id="k3">—</div>
+          <div class="ktooltip">Anzahl aller Verträge mit Status "Aktiv" (Vertragsende > 90 Tage) oder "Läuft bald ab" (Vertragsende ≤ 90 Tage). Abgelaufene und unbekannte Verträge werden nicht gezählt.</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Verlängerungsquote <span class="kinfo">i</span></div>
+          <div class="kv" id="k4">—</div>
+          <div class="ktooltip">Anteil der Verträge mit hinterlegter automatischer Verlängerung (Feld "verlaengerung" gesetzt) an allen aktiven Verträgen. Trend +2% ist ein Beispielwert.</div>
+        </div>
+        <div class="kpi">
+          <div class="kl">Upsell-Potenzial <span class="kinfo">i</span></div>
+          <div class="kv" id="k5" style="color:var(--blue)">—</div>
+          <div class="ktooltip">Geschätzt: Anzahl Kunden × 15.000 €. Basiert auf der Annahme, dass jeder Kunde im Schnitt 15.000 € zusätzliches Potenzial durch weitere Maßnahmen hat. Kein realer Datenbankwert.</div>
+        </div>
       </div>
       <div class="cgrid">
         <div class="cc"><div class="ct">Umsatz nach Kunde</div><div class="leg" id="pie-leg"></div><div style="position:relative;height:220px"><canvas id="pieC"></canvas></div></div>
@@ -216,9 +246,15 @@
       </div>
       <div class="tcard"><div class="twrap">
         <table><thead><tr>
-          <th>Kunde / Vertrag</th><th>Leistungen</th><th>Angebotsdatum</th>
-          <th>Vertragsbeginn</th><th>Laufzeit</th><th>Vertragsende</th>
-          <th>Invest</th><th>Status</th><th>Anhang</th><th></th>
+          <th onclick="sortV('kunde')">Kunde / Vertrag</th>
+          <th>Leistungen</th>
+          <th onclick="sortV('datum')">Angebotsdatum</th>
+          <th onclick="sortV('beginn')">Vertragsbeginn</th>
+          <th onclick="sortV('laufzeit')">Laufzeit</th>
+          <th onclick="sortV('ende')">Vertragsende</th>
+          <th onclick="sortV('invest')">Invest</th>
+          <th onclick="sortV('status')">Status</th>
+          <th>Anhang</th><th></th>
         </tr></thead><tbody id="vtbody"></tbody></table>
       </div></div>
     </div>
@@ -252,7 +288,7 @@
         <button class="vbtn" onclick="doTab('master')">Verlängerungen starten</button>
       </div>
       <div class="tcard"><div class="twrap">
-        <table><thead><tr><th>Kunde</th><th>Leistungen</th><th>Tage</th><th>Vertragsende</th><th>Invest</th><th></th></tr></thead>
+        <table><thead><tr><th onclick="sortF('kunde')">Kunde</th><th>Leistungen</th><th onclick="sortF('tage')">Tage</th><th onclick="sortF('ende')">Vertragsende</th><th onclick="sortF('invest')">Invest</th><th></th></tr></thead>
         <tbody id="ftbody"></tbody></table>
       </div></div>
     </div>
@@ -286,6 +322,7 @@
     <h3>PDF wird analysiert</h3>
     <div class="uprog" id="uprog">Lese PDF...</div>
     <div style="margin-top:1rem;background:var(--sur2);border-radius:var(--r);height:4px;overflow:hidden"><div id="ubar" style="height:100%;background:var(--ac);width:0%;transition:width .3s"></div></div>
+    <div style="margin-top:1rem;text-align:center"><button class="sbtn" onclick="cancelUpload()" style="font-size:12px;padding:6px 16px">✕ Abbrechen</button></div>
   </div>
 </div>
 
@@ -367,6 +404,8 @@ var REDIRECT='https://sai-dealdesk.netlify.app';
 
 /* ── State ── */
 var SB=null,DATA=[],FILTER_FRUEH='all',AM_SEL=[],AM_CAT='Analytics';
+var V_SORT='kunde',V_DIR=1; // 1=asc, -1=desc
+var F_SORT='ende',F_DIR=1;
 var pieInst=null,barInst=null;
 var COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#7F77DD','#D4537E','#888780'];
 
@@ -554,7 +593,9 @@ function renderCEO(){
   gi('k1').innerHTML=total.toLocaleString('de-DE')+' € <span class="kbp">+12%</span>';
   gi('k2').textContent=aktiv.length?Math.round(total/aktiv.length).toLocaleString('de-DE')+' €':'—';
   gi('k3').textContent=aktiv.length;
-  gi('k4').innerHTML='94% <span class="kbp">+2%</span>';
+  var hasVerl=DATA.filter(function(r){return r.verlaengerung&&(stOf(r).t==='Aktiv'||stOf(r).t==='Läuft bald ab');}).length;
+  var verlQuote=aktiv.length?Math.round((hasVerl/aktiv.length)*100):0;
+  gi('k4').textContent=verlQuote+'%';
   gi('k5').innerHTML=(DATA.length*15000).toLocaleString('de-DE')+' € <span class="kbi">geschätzt</span>';
   // Pie
   var kundenMap={};
@@ -587,12 +628,26 @@ function renderV(){
     if(fs&&stOf(r).t!==fs)return false;
     return true;
   });
+  // Sort
   rows.sort(function(a,b){
-    if(sc==='kunde')return a.kunde.localeCompare(b.kunde,'de');
-    if(sc==='ende')return(a.vertragsende_iso||'9999').localeCompare(b.vertragsende_iso||'9999');
-    if(sc==='invest')return(b.invest_final||b.invest||0)-(a.invest_final||a.invest||0);
-    return 0;
+    var v=0;
+    if(V_SORT==='kunde')v=a.kunde.localeCompare(b.kunde,'de');
+    else if(V_SORT==='datum')v=(a.angebotsdatum||'').localeCompare(b.angebotsdatum||'');
+    else if(V_SORT==='beginn')v=(a.vertragsbeginn||'').localeCompare(b.vertragsbeginn||'');
+    else if(V_SORT==='laufzeit')v=(a.laufzeit_monate||0)-(b.laufzeit_monate||0);
+    else if(V_SORT==='ende')v=(a.vertragsende_iso||'9999').localeCompare(b.vertragsende_iso||'9999');
+    else if(V_SORT==='invest')v=(a.invest_final||a.invest||0)-(b.invest_final||b.invest||0);
+    else if(V_SORT==='status')v=stOf(a).t.localeCompare(stOf(b).t);
+    return v*V_DIR;
   });
+  // Update header arrows
+  document.querySelectorAll('#tc-vertraege thead th').forEach(function(th){th.classList.remove('sort-asc','sort-desc');});
+  var thMap={'kunde':0,'datum':2,'beginn':3,'laufzeit':4,'ende':5,'invest':6,'status':7};
+  var thIdx=thMap[V_SORT];
+  if(thIdx!==undefined){
+    var ths=document.querySelectorAll('#tc-vertraege thead th');
+    if(ths[thIdx])ths[thIdx].classList.add(V_DIR===1?'sort-asc':'sort-desc');
+  }
   var tb=gi('vtbody');
   if(!rows.length){tb.innerHTML='<tr><td colspan="10"><div class="empty">Keine Verträge gefunden.</div></td></tr>';return;}
   tb.innerHTML=rows.map(function(r){
@@ -665,6 +720,16 @@ function renderMatrix(){
   gi('mbody').innerHTML=tbody;
 }
 
+/* ── Sort helpers ── */
+function sortV(col){
+  if(V_SORT===col)V_DIR*=-1;else{V_SORT=col;V_DIR=1;}
+  renderV();
+}
+function sortF(col){
+  if(F_SORT===col)F_DIR*=-1;else{F_SORT=col;F_DIR=1;}
+  renderFrueh();
+}
+
 /* ── Frühwarnsystem ── */
 var FRUEH_FILTER='all';
 function setFruehFilter(f){
@@ -674,7 +739,15 @@ function setFruehFilter(f){
   renderFrueh();
 }
 function renderFrueh(){
-  var sorted=[...DATA].sort(function(a,b){return dL(a.vertragsende_iso||'9999-01-01')-dL(b.vertragsende_iso||'9999-01-01');});
+  var sorted=[...DATA].sort(function(a,b){
+    var v=0;
+    if(F_SORT==='kunde')v=a.kunde.localeCompare(b.kunde,'de');
+    else if(F_SORT==='tage')v=dL(a.vertragsende_iso||'9999-01-01')-dL(b.vertragsende_iso||'9999-01-01');
+    else if(F_SORT==='ende')v=(a.vertragsende_iso||'9999').localeCompare(b.vertragsende_iso||'9999');
+    else if(F_SORT==='invest')v=(a.invest_final||a.invest||0)-(b.invest_final||b.invest||0);
+    else v=dL(a.vertragsende_iso||'9999-01-01')-dL(b.vertragsende_iso||'9999-01-01');
+    return v*F_DIR;
+  });
   var red=0,amber=0,green=0;
   sorted.forEach(function(r){
     var d=dL(r.vertragsende_iso||'9999-01-01');
@@ -732,12 +805,15 @@ function renderAMContent(){
   cont.innerHTML='<div style="font-size:15px;font-weight:600;margin-bottom:1rem">'+AM_CAT+'</div><div class="amgrid">'+
     items.map(function(m){
       var sel=AM_SEL.includes(m.id);
-      return'<div class="amcard'+(sel?' sel':'')+'" onclick="toggleAM(\''+m.id+'\')">'+
+      return'<div class="amcard'+(sel?' sel':'')+' onclick="toggleAM(\''+m.id+'\')">'+
         '<div class="chk">'+(sel?'✓':'')+'</div>'+
         '<div class="amcname">'+m.name+'</div>'+
         '<div class="amcdesc">'+m.desc+'</div>'+
-      '</div>';
-    }).join('')+'</div>';
+        '<div style="margin-top:8px" onclick="event.stopPropagation()">'
+        +'<select onchange="moveAM(\''+m.id+'\',this.value);this.value=\'\'\'" style="font-size:10px;padding:2px 4px;border:1px solid var(--bdr2);border-radius:4px;background:var(--sur);color:var(--tx2);cursor:pointer"><option value="">↪ Verschieben...</option>'
+        +Object.keys(AM_DATA).filter(function(x){return x!==AM_CAT;}).map(function(x){return'<option value="'+x+'">'+x+'</option>';}).join('')
+        +'</select></div>'+
+      '</div>';}).join('')+'</div>';
   updateAMBar();
 }
 function toggleAM(id){
@@ -746,6 +822,21 @@ function toggleAM(id){
   renderAMContent();
 }
 function clearAMSel(){AM_SEL=[];renderAMContent();}
+function moveAM(id,targetCat){
+  if(!targetCat)return;
+  var srcCat=null,item=null;
+  Object.keys(AM_DATA).forEach(function(cat){
+    AM_DATA[cat].forEach(function(m,idx){
+      if(m.id===id){srcCat=cat;item=m;AM_DATA[cat].splice(idx,1);}
+    });
+  });
+  if(item&&targetCat&&AM_DATA[targetCat]){
+    AM_DATA[targetCat].push(item);
+    toast('✓ "'+item.name+'" → '+targetCat+' verschoben');
+    AM_CAT=targetCat;
+    renderAM();
+  }
+}
 function updateAMBar(){
   gi('am-count').textContent=AM_SEL.length+' ausgewählt';
   var names=AM_SEL.map(function(id){
@@ -818,24 +909,66 @@ function doExportAngebot(){
 }
 
 /* ── PDF Upload ── */
+var UPLOAD_CANCELLED=false;
+
+function cancelUpload(){
+  UPLOAD_CANCELLED=true;
+  gi('upmodal').classList.remove('on');
+  toast('Upload abgebrochen');
+}
+
 async function doPDF(input){
   var files=Array.from(input.files);if(!files.length)return;input.value='';
+  UPLOAD_CANCELLED=false;
   gi('upmodal').classList.add('on');
   for(var i=0;i<files.length;i++){
-    setP('Analysiere: '+files[i].name,(i/files.length)*100);
+    if(UPLOAD_CANCELLED)break;
+    setP('Analysiere ('+( i+1)+'/'+files.length+'): '+files[i].name,(i/files.length)*100);
     try{
       var b64=await toB64(files[i]);
+      if(UPLOAD_CANCELLED)break;
       var parsed=await doExtract(b64);
+      if(UPLOAD_CANCELLED)break;
       if(parsed){
-        // Upload PDF to Supabase Storage
+        // Check for duplicate by Angebotsnummer
+        if(parsed.angebotsnr){
+          var existing=DATA.find(function(r){return r.angebotsnr&&r.angebotsnr.trim()===parsed.angebotsnr.trim();});
+          if(existing){
+            // Ask user: replace or skip
+            var replace=confirm('Vertrag "'+parsed.angebotsnr+'" ('+parsed.kunde+') ist bereits vorhanden.\n\nErsetzen?');
+            if(!replace){toast('⏭ '+parsed.kunde+' übersprungen');continue;}
+            // Delete old PDF from storage if exists
+            if(existing.pdf_url){try{await SB.storage.from('vertraege').remove([existing.pdf_url]);}catch(e){}}
+            // Update existing record
+            var pdfUrl=existing.pdf_url||null;
+            try{
+              var fname=Date.now()+'_'+files[i].name.replace(/[^a-zA-Z0-9._-]/g,'_');
+              var up=await SB.storage.from('vertraege').upload(fname,files[i],{contentType:'application/pdf',upsert:false});
+              if(!up.error)pdfUrl=fname;
+            }catch(e){console.warn('PDF upload failed:',e);}
+            var row={
+              kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
+              vertragsbeginn:parsed.vertragsbeginn,laufzeit:parsed.laufzeit,laufzeit_monate:parsed.laufzeit_monate||12,
+              verlaengerung:parsed.verlaengerung||'12 Monate',vertragsende_iso:parsed.vertragsende_iso||null,
+              invest_brutto:parsed.invest_brutto||null,invest_brutto_label:parsed.invest_brutto_label||null,
+              invest_rabatt_prozent:parsed.invest_rabatt_prozent||null,invest_final:parsed.invest_final||null,
+              invest_final_label:parsed.invest_final_label||null,invest_rhythmus:parsed.invest_rhythmus||'jaehrlich',
+              invest:parsed.invest_final||parsed.invest||null,invest_label:parsed.invest_final_label||parsed.invest_label||null,
+              leistungen:parsed.leistungen||[],notiz:parsed.notiz||''
+            };
+            if(pdfUrl)row.pdf_url=pdfUrl;
+            var upd=await SB.from('kunden').update(row).eq('id',existing.id);
+            if(upd.error)throw new Error(upd.error.message);
+            await doLoad();toast('✓ '+parsed.kunde+' aktualisiert');
+            continue;
+          }
+        }
+        // New record
         var pdfUrl=null;
         try{
           var fname=Date.now()+'_'+files[i].name.replace(/[^a-zA-Z0-9._-]/g,'_');
           var up=await SB.storage.from('vertraege').upload(fname,files[i],{contentType:'application/pdf',upsert:false});
-          if(!up.error){
-            var signed=await SB.storage.from('vertraege').createSignedUrl(fname,3600);
-            if(signed.data)pdfUrl=fname; // store filename, generate signed URL on demand
-          }
+          if(!up.error)pdfUrl=fname;
         }catch(e){console.warn('PDF upload failed:',e);}
         var row={
           kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
@@ -854,7 +987,7 @@ async function doPDF(input){
       }
     }catch(e){toast('Fehler: '+e.message);}
   }
-  setP('Fertig',100);setTimeout(function(){gi('upmodal').classList.remove('on');},800);
+  if(!UPLOAD_CANCELLED){setP('Fertig',100);setTimeout(function(){gi('upmodal').classList.remove('on');},800);}
 }
 function setP(t,p){gi('uprog').textContent=t;gi('ubar').style.width=p+'%';}
 function toB64(file){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.onerror=function(){rej(new Error('Lesefehler'));};r.readAsDataURL(file);});}
