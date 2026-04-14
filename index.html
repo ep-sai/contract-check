@@ -152,12 +152,22 @@
     .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ac);color:var(--acfg);border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
     .notify.on{opacity:1;transform:translateY(0);}
     /* Review Modal */
-    .rv-grid{display:grid;grid-template-columns:140px 1fr;gap:0;font-size:13px;}
-    .rv-l{padding:8px 12px;color:var(--tx3);font-size:12px;border-bottom:1px solid var(--bdr);}
-    .rv-v{padding:8px 12px;font-weight:500;border-bottom:1px solid var(--bdr);}
-    .rv-tags{display:flex;flex-wrap:wrap;gap:4px;}
+    .rv-grid{display:grid;grid-template-columns:130px 1fr;gap:0;font-size:13px;}
+    .rv-l{padding:8px 12px;color:var(--tx3);font-size:12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;}
+    .rv-v{padding:6px 12px;border-bottom:1px solid var(--bdr);}
+    .rv-v input,.rv-v select,.rv-v textarea{width:100%;padding:6px 8px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+    .rv-v input:focus,.rv-v textarea:focus{border-color:var(--ac);}
+    .rv-v textarea{resize:vertical;min-height:40px;}
+    .rv-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
+    .rv-tags .ltag{font-size:11px;}
+    .rv-add{display:flex;gap:4px;}
     .dup-box{background:var(--abg);border:1px solid #E0C56A;border-radius:var(--r);padding:1rem 1.25rem;margin-bottom:1rem;}
     .dup-box a{color:var(--blue);text-decoration:underline;cursor:pointer;}
+    /* PDF Viewer */
+    .pv-modal{max-width:900px;width:95vw;height:90vh;display:flex;flex-direction:column;padding:0;overflow:hidden;}
+    .pv-head{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;}
+    .pv-head h3{font-size:14px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;}
+    .pv-frame{flex:1;border:none;width:100%;background:var(--sur2);}
     /* Angebot Preview Modal */
     .aprev{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:1.5rem;margin-top:1rem;font-size:12px;max-height:400px;overflow-y:auto;}
     .aprev-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr);}
@@ -418,6 +428,18 @@
 
 <div class="notify" id="notify"></div>
 
+<!-- MODAL: PDF Viewer -->
+<div class="mbg" id="pvmodal">
+  <div class="modal pv-modal">
+    <div class="pv-head">
+      <span style="font-size:18px">📄</span>
+      <h3 id="pv-title">Vertrag</h3>
+      <button class="sbtn" onclick="gi('pvmodal').classList.remove('on');gi('pv-frame').src=''" style="padding:4px 12px;font-size:12px">✕ Schließen</button>
+    </div>
+    <iframe id="pv-frame" class="pv-frame"></iframe>
+  </div>
+</div>
+
 <script>
 /* ── Config ── */
 var SB_URL='https://exsrtfiocqleaqqvcffq.supabase.co';
@@ -626,6 +648,14 @@ function showApp(){
   var u=ls('ms_user');if(u){try{var p=JSON.parse(u);gi('uname').textContent='● '+(p.name||p.email);}catch(e){}}
   SB=window.supabase.createClient(SB_URL,SB_KEY);
   doLoad();
+  checkStorage();
+}
+async function checkStorage(){
+  try{
+    var r=await SB.storage.from('vertraege').list('',{limit:1});
+    if(r.error){console.error('⚠ Storage-Bucket "vertraege" Fehler:',r.error.message);toast('⚠ PDF-Speicher nicht erreichbar: '+r.error.message);}
+    else{console.log('✓ Storage-Bucket "vertraege" erreichbar.');}
+  }catch(e){console.error('⚠ Storage-Check fehlgeschlagen:',e);toast('⚠ PDF-Speicher: '+e.message);}
 }
 
 /* ── Data ── */
@@ -1023,24 +1053,30 @@ function cancelUpload(){
   toast('Upload abgebrochen');
 }
 
-/* Show review modal for one parsed contract – returns Promise resolved by user action */
+/* Show review modal for one parsed contract – returns Promise resolved with edited parsed object or null */
+var RV_LEIST=[];
+function rvAddL(){var inp=gi('rv-lnew'),v=inp.value.trim();if(!v)return;if(RV_LEIST.indexOf(v)<0)RV_LEIST.push(v);inp.value='';rvRenderL();}
+function rvRemL(idx){RV_LEIST.splice(idx,1);rvRenderL();}
+function rvRenderL(){gi('rv-ltags').innerHTML=RV_LEIST.map(function(l,i){return'<span class="ltag">'+l+'<button onclick="rvRemL('+i+')" title="Entfernen">×</button></span>';}).join('');}
+
 function showReview(parsed, file, existing){
   return new Promise(function(resolve){
     var body=gi('rv-body');
     var dup=gi('rv-dup');
-    var leistTags=(parsed.leistungen||[]).map(function(l){return'<span class="tag">'+l+'</span>';}).join(' ')||'—';
-    var investLabel=parsed.invest_final_label||parsed.invest_final||parsed.invest||'—';
+    RV_LEIST=(parsed.leistungen||[]).slice();
+    var investVal=parsed.invest_final||parsed.invest||'';
     body.innerHTML=
       '<div class="rv-grid">'+
-        '<div class="rv-l">Kunde</div><div class="rv-v">'+esc(parsed.kunde||'—')+'</div>'+
-        '<div class="rv-l">Angebotsnr.</div><div class="rv-v" style="font-family:DM Mono,monospace;font-size:12px">'+esc(parsed.angebotsnr||'—')+'</div>'+
-        '<div class="rv-l">Angebotsdatum</div><div class="rv-v">'+esc(parsed.angebotsdatum||'—')+'</div>'+
-        '<div class="rv-l">Vertragsbeginn</div><div class="rv-v">'+esc(parsed.vertragsbeginn||'—')+'</div>'+
-        '<div class="rv-l">Laufzeit</div><div class="rv-v">'+esc(parsed.laufzeit||'—')+'</div>'+
-        '<div class="rv-l">Invest</div><div class="rv-v">'+esc(String(investLabel))+(parsed.invest_rhythmus?' <span style="font-weight:400;color:var(--tx3);font-size:12px">'+esc(parsed.invest_rhythmus)+'</span>':'')+'</div>'+
-        '<div class="rv-l">Leistungen</div><div class="rv-v"><div class="rv-tags">'+leistTags+'</div></div>'+
-        (parsed.notiz?'<div class="rv-l">Notiz</div><div class="rv-v" style="font-weight:400;font-size:12px">'+esc(parsed.notiz)+'</div>':'')+
+        '<div class="rv-l">Kunde *</div><div class="rv-v"><input type="text" id="rv-kunde" value="'+esc(parsed.kunde||'')+'"></div>'+
+        '<div class="rv-l">Angebotsnr.</div><div class="rv-v"><input type="text" id="rv-nr" value="'+esc(parsed.angebotsnr||'')+'" style="font-family:DM Mono,monospace;font-size:12px"></div>'+
+        '<div class="rv-l">Angebotsdatum</div><div class="rv-v"><input type="text" id="rv-datum" value="'+esc(parsed.angebotsdatum||'')+'" placeholder="TT.MM.JJJJ"></div>'+
+        '<div class="rv-l">Vertragsbeginn</div><div class="rv-v"><input type="text" id="rv-beginn" value="'+esc(parsed.vertragsbeginn||'')+'" placeholder="TT.MM.JJJJ"></div>'+
+        '<div class="rv-l">Laufzeit</div><div class="rv-v"><select id="rv-lz"><option'+(parsed.laufzeit==='6 Monate'?' selected':'')+'>6 Monate</option><option'+(parsed.laufzeit==='12 Monate'||!parsed.laufzeit?' selected':'')+'>12 Monate</option><option'+(/24/.test(parsed.laufzeit)?' selected':'')+'>24 Monate</option><option'+(/36/.test(parsed.laufzeit)?' selected':'')+'>36 Monate</option></select></div>'+
+        '<div class="rv-l">Invest (€)</div><div class="rv-v" style="display:flex;gap:6px;align-items:center"><input type="number" id="rv-invest" value="'+esc(String(investVal))+'" style="flex:1"><select id="rv-rhythmus" style="width:auto"><option value="jaehrlich"'+(parsed.invest_rhythmus==='jaehrlich'||!parsed.invest_rhythmus?' selected':'')+'>p.a.</option><option value="monatlich"'+(parsed.invest_rhythmus==='monatlich'?' selected':'')+'>mtl.</option></select></div>'+
+        '<div class="rv-l">Leistungen</div><div class="rv-v"><div id="rv-ltags" class="rv-tags"></div><div class="rv-add"><input type="text" id="rv-lnew" placeholder="Leistung hinzufügen..." style="flex:1" onkeydown="if(event.key===\'Enter\'){event.preventDefault();rvAddL()}"><button type="button" class="sbtn" onclick="rvAddL()" style="padding:5px 10px;font-size:12px">+</button></div></div>'+
+        '<div class="rv-l">Notiz</div><div class="rv-v"><textarea id="rv-notiz" rows="2">'+esc(parsed.notiz||'')+'</textarea></div>'+
       '</div>';
+    rvRenderL();
     // Duplicate info
     if(existing){
       dup.style.display='block';
@@ -1054,9 +1090,28 @@ function showReview(parsed, file, existing){
       gi('rv-save').textContent='✓ Speichern';
     }
     // Wire buttons
-    gi('rv-skip').onclick=function(){gi('rvmodal').classList.remove('on');resolve('skip');};
-    gi('rv-save').onclick=function(){gi('rvmodal').classList.remove('on');resolve('save');};
+    gi('rv-skip').onclick=function(){gi('rvmodal').classList.remove('on');resolve(null);};
+    gi('rv-save').onclick=function(){
+      var kunde=gi('rv-kunde').value.trim();
+      if(!kunde){alert('Kundenname ist Pflichtfeld.');return;}
+      var edited=Object.assign({},parsed,{
+        kunde:kunde,
+        angebotsnr:gi('rv-nr').value.trim(),
+        angebotsdatum:gi('rv-datum').value.trim(),
+        vertragsbeginn:gi('rv-beginn').value.trim(),
+        laufzeit:gi('rv-lz').value,
+        laufzeit_monate:parseInt(gi('rv-lz').value)||12,
+        invest_final:parseFloat(gi('rv-invest').value)||null,
+        invest:parseFloat(gi('rv-invest').value)||null,
+        invest_rhythmus:gi('rv-rhythmus').value,
+        leistungen:RV_LEIST.slice(),
+        notiz:gi('rv-notiz').value.trim()
+      });
+      gi('rvmodal').classList.remove('on');
+      resolve(edited);
+    };
     gi('rvmodal').classList.add('on');
+    gi('rv-kunde').focus();
   });
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -1083,7 +1138,9 @@ async function doPDF(input){
         }
         var action=await showReview(parsed,files[i],existing||null);
         if(UPLOAD_CANCELLED)break;
-        if(action==='skip'){toast('⏭ '+parsed.kunde+' übersprungen');if(i<files.length-1)gi('upmodal').classList.add('on');continue;}
+        if(!action){toast('⏭ '+(parsed.kunde||'Vertrag')+' übersprungen');if(i<files.length-1)gi('upmodal').classList.add('on');continue;}
+        // Use edited values
+        parsed=action;
         // Show progress again for saving
         gi('upmodal').classList.add('on');
         setP('Speichere: '+parsed.kunde,((i+0.5)/files.length)*100);
@@ -1213,13 +1270,23 @@ function doCSV(){
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='dealdesk_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 
-/* ── PDF öffnen (signierte URL) ── */
+/* ── PDF Viewer (eingebettet, kein Download) ── */
 async function openPDF(fname){
   try{
+    gi('pv-title').textContent='Lade PDF…';
+    gi('pv-frame').src='';
+    gi('pvmodal').classList.add('on');
     var r=await SB.storage.from('vertraege').createSignedUrl(fname,3600);
-    if(r.data&&r.data.signedUrl){window.open(r.data.signedUrl,'_blank');}
-    else{toast('PDF konnte nicht geöffnet werden.');}
-  }catch(e){toast('Fehler: '+e.message);}
+    if(r.data&&r.data.signedUrl){
+      // Find customer name for title
+      var entry=DATA.find(function(d){return d.pdf_url===fname;});
+      gi('pv-title').textContent=entry?(entry.kunde+' – '+(entry.angebotsnr||'Vertrag')):'Vertrag';
+      gi('pv-frame').src=r.data.signedUrl;
+    } else {
+      gi('pvmodal').classList.remove('on');
+      toast('PDF konnte nicht geöffnet werden.');
+    }
+  }catch(e){gi('pvmodal').classList.remove('on');toast('Fehler: '+e.message);}
 }
 
 /* ── Org-Dropdown (Platzhalter) ── */
