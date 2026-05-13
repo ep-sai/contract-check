@@ -21,7 +21,7 @@
     .msb:hover{opacity:.85;}
     .lerr{color:var(--red);font-size:13px;margin-top:12px;min-height:18px;}
     /* App */
-    #app{display:none;}
+    #app{display:none;flex-direction:column;height:100vh;overflow:hidden;}
     .topbar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
     .logo{font-size:18px;font-weight:600;letter-spacing:-.3px;}
     .logo span{color:var(--tx3);font-weight:400;}
@@ -168,18 +168,17 @@
     .pv-head{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;}
     .pv-head h3{font-size:14px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;}
     .pv-frame{flex:1;border:none;width:100%;background:var(--sur2);}
-    /* Chat */
-    .chat-fab{position:fixed;bottom:1.5rem;right:1.5rem;width:52px;height:52px;border-radius:50%;background:var(--ac);color:var(--acfg);border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:998;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
-    .chat-fab:hover{transform:scale(1.08);}
-    .chat-panel{position:fixed;bottom:0;right:0;width:420px;height:100vh;background:var(--sur);border-left:1px solid var(--bdr);box-shadow:-4px 0 24px rgba(0,0,0,.08);z-index:1000;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;font-size:13px;}
-    .chat-panel.open{transform:translateX(0);}
+    /* Chat Sidebar */
+    .app-body{display:flex;flex:1;overflow:hidden;position:relative;}
+    .app-content{flex:1;overflow-y:auto;min-width:0;}
+    .chat-side{width:380px;flex-shrink:0;border-left:1px solid var(--bdr);background:var(--sur);display:flex;flex-direction:column;font-size:13px;transition:margin-right .25s ease;overflow:hidden;}
+    .chat-side.closed{margin-right:-380px;}
     .chat-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;}
-    .chat-head h3{font-size:14px;font-weight:600;flex:1;margin:0;}
+    .chat-head h3{font-size:13px;font-weight:600;flex:1;margin:0;white-space:nowrap;}
     .chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
     .chat-msg{max-width:88%;padding:10px 14px;border-radius:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;}
     .chat-msg.user{align-self:flex-end;background:var(--ac);color:var(--acfg);border-bottom-right-radius:4px;}
     .chat-msg.bot{align-self:flex-start;background:var(--sur2);color:var(--tx);border-bottom-left-radius:4px;}
-    .chat-msg.bot .think{font-size:11px;color:var(--tx3);font-style:italic;margin-bottom:4px;}
     .chat-typing{align-self:flex-start;padding:10px 14px;color:var(--tx3);font-size:12px;}
     .chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bdr);flex-shrink:0;background:var(--sur);}
     .chat-input input{flex:1;padding:10px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
@@ -191,7 +190,10 @@
     .chat-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
     .chat-chip{padding:6px 12px;border:1px solid var(--bdr);border-radius:20px;font-size:11px;cursor:pointer;background:var(--sur);color:var(--tx2);transition:all .15s;}
     .chat-chip:hover{border-color:var(--ac);color:var(--ac);}
-    @media(max-width:500px){.chat-panel{width:100vw;}}
+    .chat-toggle{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-size:13px;color:var(--tx2);display:inline-flex;align-items:center;gap:5px;font-family:"DM Sans",sans-serif;}
+    .chat-toggle:hover{background:var(--sur2);color:var(--tx);}
+    .chat-toggle.active{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
+    @media(max-width:900px){.chat-side{position:fixed;right:0;top:0;height:100vh;z-index:1000;box-shadow:-4px 0 24px rgba(0,0,0,.08);}.chat-side.closed{margin-right:0;transform:translateX(100%);}}
     /* Angebot Preview Modal */
     .aprev{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:1.5rem;margin-top:1rem;font-size:12px;max-height:400px;overflow-y:auto;}
     .aprev-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr);}
@@ -233,6 +235,7 @@
     <button class="tbtn" onclick="openAdd()">+ Manuell</button>
     <label class="tbtn pri" style="cursor:pointer">↑ PDF hochladen<input type="file" accept=".pdf" multiple style="display:none" onchange="doPDF(this)"></label>
     <button class="tbtn" onclick="doLogout()" title="Abmelden">↩</button>
+    <button class="chat-toggle active" id="chat-tog" onclick="toggleChat()" title="AI Assistent ein-/ausblenden">🤖 AI</button>
   </div>
   <div class="tabs">
     <button class="tab" onclick="doTab('ceo')">📊 Dashboard</button>
@@ -241,7 +244,9 @@
     <button class="tab" onclick="doTab('frueh')">⚠ Frühwarnsystem</button>
     <button class="tab dis" onclick="return false" title="Kommt bald">📋 Angebotsmaster</button>
   </div>
-  <div class="main">
+  <div class="app-body">
+    <div class="app-content">
+      <div class="main">
 
     <!-- CEO -->
     <div id="tc-ceo" class="tc">
@@ -358,6 +363,32 @@
       </div>
     </div>
 
+      </div>
+    </div>
+    <!-- Chat Sidebar -->
+    <div class="chat-side" id="chat-side">
+      <div class="chat-head">
+        <span style="font-size:16px">🤖</span>
+        <h3>DealDesk AI Assistent</h3>
+        <button class="sbtn" onclick="toggleChat()" style="padding:4px 10px;font-size:11px">✕</button>
+      </div>
+      <div class="chat-msgs" id="chat-msgs">
+        <div class="chat-welcome" id="chat-welcome">
+          <h4>Hallo! 👋</h4>
+          <div>Ich kenne alle Verträge in DealDesk.<br>Frag mich etwas!</div>
+          <div class="chat-chips">
+            <div class="chat-chip" onclick="chatAsk(this.textContent)">Welche Verträge laufen bald ab?</div>
+            <div class="chat-chip" onclick="chatAsk(this.textContent)">Wer hat die höchsten Invests?</div>
+            <div class="chat-chip" onclick="chatAsk(this.textContent)">Wie viele Kunden haben wir?</div>
+            <div class="chat-chip" onclick="chatAsk(this.textContent)">Welche Leistungen sind am beliebtesten?</div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-input">
+        <input type="text" id="chat-in" placeholder="Frage stellen..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend()}">
+        <button id="chat-btn" onclick="chatSend()">Senden</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -452,33 +483,6 @@
 
 <div class="notify" id="notify"></div>
 
-<!-- Chat FAB -->
-<button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="DealDesk Assistent">💬</button>
-
-<!-- Chat Panel -->
-<div class="chat-panel" id="chat-panel">
-  <div class="chat-head">
-    <span style="font-size:18px">🤖</span>
-    <h3>DealDesk Assistent</h3>
-    <button class="sbtn" onclick="toggleChat()" style="padding:4px 12px;font-size:12px">✕</button>
-  </div>
-  <div class="chat-msgs" id="chat-msgs">
-    <div class="chat-welcome" id="chat-welcome">
-      <h4>Hallo! 👋</h4>
-      <div>Ich kenne alle Verträge in DealDesk.<br>Frag mich etwas!</div>
-      <div class="chat-chips">
-        <div class="chat-chip" onclick="chatAsk(this.textContent)">Welche Verträge laufen bald ab?</div>
-        <div class="chat-chip" onclick="chatAsk(this.textContent)">Wer hat die höchsten Invests?</div>
-        <div class="chat-chip" onclick="chatAsk(this.textContent)">Wie viele Kunden haben wir?</div>
-        <div class="chat-chip" onclick="chatAsk(this.textContent)">Welche Leistungen sind am beliebtesten?</div>
-      </div>
-    </div>
-  </div>
-  <div class="chat-input">
-    <input type="text" id="chat-in" placeholder="Frage stellen..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend()}">
-    <button id="chat-btn" onclick="chatSend()">Senden</button>
-  </div>
-</div>
 
 <!-- MODAL: PDF Viewer -->
 <div class="mbg" id="pvmodal">
@@ -696,7 +700,7 @@ if(typeof msal!=='undefined'){initMSAL();}else{gi('login-err').textContent='Micr
 function doMSLogin(){if(!msalInst){gi('login-err').textContent='MSAL nicht initialisiert.';return;}try{msalInst.loginRedirect({scopes:['User.Read']});}catch(e){gi('login-err').textContent='Login Fehler: '+e.message;}}
 function doLogout(){localStorage.removeItem('ms_user');sessionStorage.clear();if(msalInst)msalInst.logoutRedirect();else window.location.reload();}
 function showApp(){
-  gi('ls').style.display='none';gi('app').style.display='block';
+  gi('ls').style.display='none';gi('app').style.display='flex';
   var u=ls('ms_user');if(u){try{var p=JSON.parse(u);gi('uname').textContent='● '+(p.name||p.email);}catch(e){}}
   SB=window.supabase.createClient(SB_URL,SB_KEY);
   doLoad();
@@ -1346,11 +1350,12 @@ var CHAT_HISTORY=[];
 var CHAT_BUSY=false;
 
 function toggleChat(){
-  var p=gi('chat-panel');
-  var fab=gi('chat-fab');
-  p.classList.toggle('open');
-  fab.style.display=p.classList.contains('open')?'none':'flex';
-  if(p.classList.contains('open'))gi('chat-in').focus();
+  var s=gi('chat-side');
+  var tog=gi('chat-tog');
+  s.classList.toggle('closed');
+  var open=!s.classList.contains('closed');
+  tog.classList.toggle('active',open);
+  if(open)gi('chat-in').focus();
 }
 
 function chatAsk(txt){
