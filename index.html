@@ -149,7 +149,7 @@
     /* Misc */
     .uprog{font-size:13px;color:var(--tx2);text-align:center;padding:8px;}
     .empty{text-align:center;padding:4rem 2rem;color:var(--tx3);}
-    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ac);color:var(--acfg);border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ac);color:var(--acfg);border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:1001;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
     .notify.on{opacity:1;transform:translateY(0);}
     /* Review Modal */
     .rv-grid{display:grid;grid-template-columns:130px 1fr;gap:0;font-size:13px;}
@@ -168,6 +168,30 @@
     .pv-head{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;}
     .pv-head h3{font-size:14px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;}
     .pv-frame{flex:1;border:none;width:100%;background:var(--sur2);}
+    /* Chat */
+    .chat-fab{position:fixed;bottom:1.5rem;right:1.5rem;width:52px;height:52px;border-radius:50%;background:var(--ac);color:var(--acfg);border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:998;display:flex;align-items:center;justify-content:center;transition:transform .15s;}
+    .chat-fab:hover{transform:scale(1.08);}
+    .chat-panel{position:fixed;bottom:0;right:0;width:420px;height:100vh;background:var(--sur);border-left:1px solid var(--bdr);box-shadow:-4px 0 24px rgba(0,0,0,.08);z-index:1000;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .25s ease;font-size:13px;}
+    .chat-panel.open{transform:translateX(0);}
+    .chat-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;}
+    .chat-head h3{font-size:14px;font-weight:600;flex:1;margin:0;}
+    .chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+    .chat-msg{max-width:88%;padding:10px 14px;border-radius:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;}
+    .chat-msg.user{align-self:flex-end;background:var(--ac);color:var(--acfg);border-bottom-right-radius:4px;}
+    .chat-msg.bot{align-self:flex-start;background:var(--sur2);color:var(--tx);border-bottom-left-radius:4px;}
+    .chat-msg.bot .think{font-size:11px;color:var(--tx3);font-style:italic;margin-bottom:4px;}
+    .chat-typing{align-self:flex-start;padding:10px 14px;color:var(--tx3);font-size:12px;}
+    .chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bdr);flex-shrink:0;background:var(--sur);}
+    .chat-input input{flex:1;padding:10px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+    .chat-input input:focus{border-color:var(--ac);}
+    .chat-input button{padding:8px 16px;background:var(--ac);color:var(--acfg);border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-family:"DM Sans",sans-serif;}
+    .chat-input button:disabled{opacity:.5;cursor:not-allowed;}
+    .chat-welcome{text-align:center;padding:2rem 1.5rem;color:var(--tx3);}
+    .chat-welcome h4{color:var(--tx);font-size:15px;margin-bottom:8px;}
+    .chat-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
+    .chat-chip{padding:6px 12px;border:1px solid var(--bdr);border-radius:20px;font-size:11px;cursor:pointer;background:var(--sur);color:var(--tx2);transition:all .15s;}
+    .chat-chip:hover{border-color:var(--ac);color:var(--ac);}
+    @media(max-width:500px){.chat-panel{width:100vw;}}
     /* Angebot Preview Modal */
     .aprev{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--r);padding:1.5rem;margin-top:1rem;font-size:12px;max-height:400px;overflow-y:auto;}
     .aprev-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--bdr);}
@@ -427,6 +451,34 @@
 </div>
 
 <div class="notify" id="notify"></div>
+
+<!-- Chat FAB -->
+<button class="chat-fab" id="chat-fab" onclick="toggleChat()" title="DealDesk Assistent">💬</button>
+
+<!-- Chat Panel -->
+<div class="chat-panel" id="chat-panel">
+  <div class="chat-head">
+    <span style="font-size:18px">🤖</span>
+    <h3>DealDesk Assistent</h3>
+    <button class="sbtn" onclick="toggleChat()" style="padding:4px 12px;font-size:12px">✕</button>
+  </div>
+  <div class="chat-msgs" id="chat-msgs">
+    <div class="chat-welcome" id="chat-welcome">
+      <h4>Hallo! 👋</h4>
+      <div>Ich kenne alle Verträge in DealDesk.<br>Frag mich etwas!</div>
+      <div class="chat-chips">
+        <div class="chat-chip" onclick="chatAsk(this.textContent)">Welche Verträge laufen bald ab?</div>
+        <div class="chat-chip" onclick="chatAsk(this.textContent)">Wer hat die höchsten Invests?</div>
+        <div class="chat-chip" onclick="chatAsk(this.textContent)">Wie viele Kunden haben wir?</div>
+        <div class="chat-chip" onclick="chatAsk(this.textContent)">Welche Leistungen sind am beliebtesten?</div>
+      </div>
+    </div>
+  </div>
+  <div class="chat-input">
+    <input type="text" id="chat-in" placeholder="Frage stellen..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();chatSend()}">
+    <button id="chat-btn" onclick="chatSend()">Senden</button>
+  </div>
+</div>
 
 <!-- MODAL: PDF Viewer -->
 <div class="mbg" id="pvmodal">
@@ -1287,6 +1339,93 @@ async function openPDF(fname){
       toast('PDF konnte nicht geöffnet werden.');
     }
   }catch(e){gi('pvmodal').classList.remove('on');toast('Fehler: '+e.message);}
+}
+
+/* ── Chat Assistent ── */
+var CHAT_HISTORY=[];
+var CHAT_BUSY=false;
+
+function toggleChat(){
+  var p=gi('chat-panel');
+  var fab=gi('chat-fab');
+  p.classList.toggle('open');
+  fab.style.display=p.classList.contains('open')?'none':'flex';
+  if(p.classList.contains('open'))gi('chat-in').focus();
+}
+
+function chatAsk(txt){
+  gi('chat-in').value=txt;
+  chatSend();
+}
+
+function chatAddMsg(role,text){
+  var w=gi('chat-welcome');if(w)w.style.display='none';
+  var d=document.createElement('div');
+  d.className='chat-msg '+(role==='user'?'user':'bot');
+  d.textContent=text;
+  gi('chat-msgs').appendChild(d);
+  gi('chat-msgs').scrollTop=gi('chat-msgs').scrollHeight;
+  return d;
+}
+
+function buildDataContext(){
+  // Build a concise summary of all contract data for Claude
+  var lines=DATA.map(function(r){
+    var status=stOf(r).t;
+    var leist=(r.leistungen||[]).join(', ');
+    var invest=r.invest_final||r.invest||'—';
+    var rhythmus=r.invest_rhythmus||'';
+    return r.kunde+' | Nr:'+r.angebotsnr+' | Datum:'+r.angebotsdatum+' | Beginn:'+r.vertragsbeginn+' | Laufzeit:'+(r.laufzeit||r.laufzeit_monate+' Monate')+' | Ende:'+r.vertragsende_iso+' | Invest:'+invest+' '+rhythmus+' | Status:'+status+' | Leistungen:'+leist;
+  });
+  return 'Heute: '+new Date().toLocaleDateString('de-DE')+'\n\nVerträge in DealDesk ('+DATA.length+' Einträge):\n'+lines.join('\n');
+}
+
+async function chatSend(){
+  var inp=gi('chat-in'),q=inp.value.trim();
+  if(!q||CHAT_BUSY)return;
+  inp.value='';
+  CHAT_BUSY=true;
+  gi('chat-btn').disabled=true;
+
+  chatAddMsg('user',q);
+  CHAT_HISTORY.push({role:'user',content:q});
+
+  // Typing indicator
+  var typ=document.createElement('div');
+  typ.className='chat-typing';typ.textContent='Denke nach…';
+  gi('chat-msgs').appendChild(typ);
+  gi('chat-msgs').scrollTop=gi('chat-msgs').scrollHeight;
+
+  try{
+    var sysPrompt='Du bist der DealDesk Assistent – das interne Vertrags-CRM von Smile AI.\n'+
+      'Du hast Zugriff auf alle Vertragsdaten und beantwortest Fragen dazu.\n'+
+      'Antworte kurz, präzise und auf Deutsch. Nutze konkrete Zahlen und Kundennamen aus den Daten.\n'+
+      'Wenn du etwas nicht aus den Daten beantworten kannst, sage das ehrlich.\n\n'+
+      buildDataContext();
+
+    // Send last 10 messages as conversation history
+    var hist=CHAT_HISTORY.slice(-10);
+
+    var resp=await fetch('/api/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sysPrompt,messages:hist})
+    });
+    if(!resp.ok){
+      var errBody='';try{var ej=await resp.json();errBody=ej.error&&ej.error.message?ej.error.message:JSON.stringify(ej);}catch(e){errBody=resp.status;}
+      throw new Error('API Fehler: '+errBody);
+    }
+    var j=await resp.json();
+    var answer=(j.content&&j.content[0]&&j.content[0].text)||'Keine Antwort erhalten.';
+    CHAT_HISTORY.push({role:'assistant',content:answer});
+    typ.remove();
+    chatAddMsg('bot',answer);
+  }catch(e){
+    typ.remove();
+    chatAddMsg('bot','❌ Fehler: '+e.message);
+    CHAT_HISTORY.pop(); // Remove failed user message from history
+  }
+  CHAT_BUSY=false;
+  gi('chat-btn').disabled=false;
+  gi('chat-in').focus();
 }
 
 /* ── Org-Dropdown (Platzhalter) ── */
