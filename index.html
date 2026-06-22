@@ -403,9 +403,7 @@
         <button class="vbtn" onclick="doTab('master')">Verlängerungen starten</button>
         <button class="vbtn" onclick="sendSlackAlerts()" style="background:var(--bbg);color:var(--blue);margin-left:8px">💬 Slack Alerts</button>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin:10px 0;gap:8px">
-        <button class="sbtn" onclick="sendSlackAlerts()" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:8px 16px">💬 Slack Alerts senden</button>
-      </div>
+
       <div class="tcard"><div class="twrap">
         <table><thead><tr><th onclick="sortF('kunde')">Kunde</th><th>Leistungen</th><th onclick="sortF('tage')">Tage</th><th onclick="sortF('ende')">Vertragsende</th><th onclick="sortF('invest')">Invest</th><th></th></tr></thead>
         <tbody id="ftbody"></tbody></table>
@@ -1146,6 +1144,7 @@ function renderFrueh(){
       '<td style="white-space:nowrap;display:flex;gap:6px;padding:8px 12px">'+
         '<button class="abt" onclick="openEdit(\''+r.id+'\')">Details</button>'+
         '<button class="abt grn" onclick="doTab(\'master\')">Verlängern</button>'+
+        '<button class="abt" onclick="sendSlackAlerts(\''+r.id+'\')" style="display:inline-flex;align-items:center;gap:4px">💬 Alert</button>'+
       '</td></tr>';
   }).join('');
 }
@@ -1610,11 +1609,16 @@ async function loadSlackChannels(){
 
 function matchChannel(kunde,channels){
   var name=kunde.toLowerCase()
-    .replace(/gmbh|&\s*co\.?\s*kg|ag|se|e\.v\.?|inc\.?|ltd\.?|deutschland|pharma|arzneimittel|heilmittel|vital|pütter|ingelheim|vetmedica/gi,'')
+    .replace(/gmbh|&\s*co\.?\s*kg|ag|se|e\.v\.?|inc\.?|ltd\.?|deutschland|pharma|arzneimittel|heilmittel|vital|p\u00fctter|ingelheim|vetmedica/gi,'')
     .trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  // 1. Exakter Match
   var ch=channels.find(function(c){return c.name===name;});
   if(ch)return ch;
-  var parts=name.split('-').filter(function(p){return p.length>2;});
+  // 2. Channel-Name enthaelt den vollen bereinigten Kundennamen (mind. 6 Zeichen)
+  ch=channels.find(function(c){return(c.name.indexOf(name)>=0)||(name.indexOf(c.name)>=0&&c.name.length>=6);});
+  if(ch)return ch;
+  // 3. Teilwort-Match — nur Woerter mit mind. 5 Zeichen um Kurzwoerter wie "test" zu vermeiden
+  var parts=name.split('-').filter(function(p){return p.length>=5;});
   for(var i=0;i<parts.length;i++){
     ch=channels.find(function(c){return c.name===parts[i]||c.name.indexOf(parts[i])>=0;});
     if(ch)return ch;
@@ -1622,7 +1626,7 @@ function matchChannel(kunde,channels){
   return null;
 }
 
-async function sendSlackAlerts(){
+async function sendSlackAlerts(singleId){
   toast('📡 Lade Slack-Channels...');
   var channels=await loadSlackChannels();
   if(!channels.length){toast('⚠ Keine Slack-Channels gefunden');return;}
@@ -1630,11 +1634,14 @@ async function sendSlackAlerts(){
   var now=new Date(),sent=0,skipped=0;
   var alerts=[];
 
-  DATA.forEach(function(r){
+  // Wenn singleId gesetzt: nur diesen Vertrag
+  var source=singleId?DATA.filter(function(r){return r.id===singleId;}):DATA;
+
+  source.forEach(function(r){
     var st=stOf(r);
     if(!st.end)return;
     var diff=Math.floor((st.end-now)/(1000*60*60*24));
-    if(diff>180||diff<0)return;
+    if(!singleId&&(diff>180||diff<0))return;
 
     var ch=matchChannel(r.kunde,channels);
     if(!ch){skipped++;return;}
@@ -1659,7 +1666,11 @@ async function sendSlackAlerts(){
 
   if(!alerts.length){toast('✓ Keine Alerts nötig (alle Verträge >180 Tage)');return;}
 
-  if(!confirm(alerts.length+' Alert(s) werden an Slack gesendet:\n\n'+alerts.map(function(a){return'→ #'+a.channel.name+' ('+a.kunde+', '+a.diff+' Tage)';}).join('\n')+'\n\nSenden?'))return;
+  if(!alerts.length){toast('⚠ Kein passender Slack-Channel gefunden');return;}
+  var confirmMsg=singleId
+    ?'Alert senden an #'+alerts[0].channel.name+' für '+alerts[0].kunde+'?\n\nSenden?'
+    :alerts.length+' Alert(s) werden an Slack gesendet:\n\n'+alerts.map(function(a){return'→ #'+a.channel.name+' ('+a.kunde+', '+a.diff+' Tage)';}).join('\n')+'\n\nSenden?';
+  if(!confirm(confirmMsg))return;
 
   for(var i=0;i<alerts.length;i++){
     try{
