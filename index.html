@@ -1609,7 +1609,7 @@ async function loadSlackChannels(){
 
 function matchChannel(kunde,channels){
   var name=kunde.toLowerCase()
-    .replace(/gmbh|&\s*co\.?\s*kg|ag|se|e\.v\.?|inc\.?|ltd\.?|deutschland|pharma|arzneimittel|heilmittel|vital|p\u00fctter|ingelheim|vetmedica/gi,'')
+    .replace(/\b(gmbh|ag|se|inc|ltd|deutschland|pharma|arzneimittel|heilmittel|vital|ingelheim|vetmedica)\b|&\s*co\.?\s*kg|e\.v\.?|p\u00fctter/gi,'')
     .trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');
   // 1. Exakter Match
   var ch=channels.find(function(c){return c.name===name;});
