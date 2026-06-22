@@ -25,7 +25,7 @@
     /* Sidebar */
     .sidebar{width:240px;flex-shrink:0;background:linear-gradient(180deg,#13113A,#0F0D2C,#0B0925);color:var(--navyfg);display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.06);transition:width .2s;overflow:hidden;}
     .sidebar.collapsed{width:56px;}
-    .sb-head{display:flex;align-items:center;gap:10px;padding:16px;height:56px;}
+    .sb-head{display:flex;align-items:center;gap:10px;padding:16px;height:56px;cursor:pointer;}
     .sb-logo{flex-shrink:0;}
     .sb-brand{font-family:"Sora",sans-serif;font-size:17px;font-weight:700;color:#fff;letter-spacing:-.02em;white-space:nowrap;}
     .sidebar.collapsed .sb-brand,.sidebar.collapsed .sb-lbl,.sidebar.collapsed .sb-badge,.sidebar.collapsed .sb-uname,.sidebar.collapsed .sb-org{display:none;}
@@ -63,6 +63,16 @@
     .mt-search .mt-ico{border:none;flex-shrink:0;}
     .mt-search input{width:0;border:none;outline:none;font-family:"Source Sans 3",sans-serif;font-size:14px;color:var(--tx);background:transparent;padding:0;transition:width .25s;}
     .mt-search.open input{width:160px;padding:0 8px;}
+    /* Filter Dropdown */
+    .mt-filter-drop{display:none;position:absolute;top:calc(100% + 8px);right:0;width:280px;background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);box-shadow:0 8px 24px rgba(15,12,65,.12);padding:16px;z-index:200;}
+    .mt-filter-drop.open{display:block;}
+    .mf-title{font-family:"Sora",sans-serif;font-size:14px;font-weight:600;margin-bottom:12px;letter-spacing:-.02em;}
+    .mf-group{margin-bottom:10px;}
+    .mf-label{display:block;font-size:11px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+    .mf-group select,.mf-group input{width:100%;padding:8px 10px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"Source Sans 3",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+    .mf-group select:focus,.mf-group input:focus{border-color:var(--ac);}
+    .mf-reset{width:100%;padding:8px;border:none;border-radius:var(--r);background:var(--sur2);color:var(--tx2);font-family:"Source Sans 3",sans-serif;font-size:12px;cursor:pointer;margin-top:4px;}
+    .mf-reset:hover{background:var(--bdr);}
     .mt-pill{display:flex;align-items:center;gap:6px;border:1px solid var(--bdr);border-radius:999px;padding:7px 16px;background:none;cursor:pointer;font-family:"Source Sans 3",sans-serif;font-size:13px;color:var(--tx2);transition:all .15s;white-space:nowrap;}
     .mt-pill:hover{background:var(--sur2);border-color:var(--bdr2);}
     .sp{flex:1;}
@@ -254,12 +264,12 @@
 <div id="app">
   <!-- Sidebar -->
   <aside class="sidebar" id="sidebar">
-    <div class="sb-head">
+    <div class="sb-head" onclick="if(gi('sidebar').classList.contains('collapsed'))gi('sidebar').classList.remove('collapsed')">
       <div class="sb-logo">
-        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="var(--navyac)"/><path d="M8 22V10l8 6-8 6zm8 0V10l8 6-8 6z" fill="#0F0D2C" fill-opacity=".9"/></svg>
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none"><rect width="32" height="32" rx="8" fill="var(--navyac)"/><text x="16" y="22" text-anchor="middle" font-family="Sora,sans-serif" font-size="18" font-weight="700" fill="#0F0D2C">S</text></svg>
       </div>
       <span class="sb-brand">DealDesk</span>
-      <button class="sb-toggle" onclick="toggleSidebar()" title="Menü ein-/ausklappen">‹</button>
+      <button class="sb-toggle" onclick="event.stopPropagation();toggleSidebar()">‹</button>
     </div>
     <nav class="sb-nav" id="sb-nav">
       <button class="sb-item" data-tab="ceo" onclick="doTab('ceo')"><span class="sb-ic">📊</span><span class="sb-lbl">Dashboard</span></button>
@@ -291,8 +301,21 @@
           <button class="mt-ico" title="Suchen"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
           <input type="text" id="mt-search-in" placeholder="Suche..." oninput="doGlobalSearch(this.value)" onblur="closeSearch()">
         </div>
+        <div style="position:relative">
+          <button class="mt-ico" onclick="toggleFilter()" id="mt-filter-btn" title="Filter"><svg viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg></button>
+          <div class="mt-filter-drop" id="mt-filter-drop">
+            <div class="mf-title">Filter</div>
+            <div class="mf-group"><label class="mf-label">Status</label><select id="gf-status" onchange="applyGlobalFilter()"><option value="">Alle</option><option>Aktiv</option><option>Läuft bald ab</option><option>Abgelaufen</option></select></div>
+            <div class="mf-group"><label class="mf-label">Kunde</label><input type="text" id="gf-kunde" placeholder="Kundenname..." oninput="applyGlobalFilter()"></div>
+            <div class="mf-group"><label class="mf-label">Module</label><input type="text" id="gf-module" placeholder="Leistung..." oninput="applyGlobalFilter()"></div>
+            <div class="mf-group"><label class="mf-label">Invest min (€)</label><input type="number" id="gf-invest" placeholder="z.B. 10000" oninput="applyGlobalFilter()"></div>
+            <div class="mf-group"><label class="mf-label">Ablauf in Tagen ≤</label><input type="number" id="gf-tage" placeholder="z.B. 180" oninput="applyGlobalFilter()"></div>
+            <button class="mf-reset" onclick="resetGlobalFilter()">Filter zurücksetzen</button>
+          </div>
+        </div>
         <button class="mt-ico" onclick="openAdd()" title="Manuell hinzufügen"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
         <label class="mt-ico pri" style="cursor:pointer" title="PDF hochladen"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><input type="file" accept=".pdf" multiple style="display:none" onchange="doPDF(this)"></label>
+        <button class="mt-ico" onclick="doCSV()" title="CSV Export"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
         <button class="mt-ico" onclick="doLogout()" title="Abmelden"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
       </div>
     </div>
@@ -1703,7 +1726,31 @@ function onOrgChange(val){toast('Unternehmen: '+gi('org-select').options[gi('org
 /* ── Expandable Search ── */
 function openSearch(){var s=gi('mt-search');if(!s.classList.contains('open')){s.classList.add('open');gi('mt-search-in').focus();}}
 function closeSearch(){setTimeout(function(){var s=gi('mt-search');var inp=gi('mt-search-in');if(!inp.value)s.classList.remove('open');},200);}
-function doGlobalSearch(v){var q=gi('qsearch');if(q){q.value=v;renderV();}}
+function doGlobalSearch(v){var q=gi('qsearch');if(q){q.value=v;renderV();renderFrueh();}}
+
+/* ── Global Filter ── */
+function toggleFilter(){gi('mt-filter-drop').classList.toggle('open');}
+function applyGlobalFilter(){renderV();renderFrueh();renderMatrix();}
+function resetGlobalFilter(){
+  gi('gf-status').value='';gi('gf-kunde').value='';gi('gf-module').value='';gi('gf-invest').value='';gi('gf-tage').value='';
+  applyGlobalFilter();gi('mt-filter-drop').classList.remove('open');
+}
+function getFilteredData(){
+  var d=DATA.slice();
+  var fs=gi('gf-status')?gi('gf-status').value:'';
+  var fk=gi('gf-kunde')?gi('gf-kunde').value.toLowerCase():'';
+  var fm=gi('gf-module')?gi('gf-module').value.toLowerCase():'';
+  var fi=gi('gf-invest')?parseFloat(gi('gf-invest').value)||0:0;
+  var ft=gi('gf-tage')?parseFloat(gi('gf-tage').value)||0:0;
+  var sq=gi('mt-search-in')?gi('mt-search-in').value.toLowerCase():'';
+  if(sq)d=d.filter(function(r){return(r.kunde||'').toLowerCase().indexOf(sq)>=0||(r.angebotsnr||'').toLowerCase().indexOf(sq)>=0;});
+  if(fs)d=d.filter(function(r){return stOf(r).t===fs;});
+  if(fk)d=d.filter(function(r){return(r.kunde||'').toLowerCase().indexOf(fk)>=0;});
+  if(fm)d=d.filter(function(r){return(r.leistungen||[]).some(function(l){return l.toLowerCase().indexOf(fm)>=0;});});
+  if(fi)d=d.filter(function(r){return(r.invest_final||r.invest||0)>=fi;});
+  if(ft){var now=new Date();d=d.filter(function(r){var st=stOf(r);if(!st.end)return false;var diff=Math.floor((st.end-now)/(1000*60*60*24));return diff<=ft&&diff>0;});}
+  return d;
+}
 
 /* ── Toast ── */
 function toast(msg){var n=gi('notify');n.textContent=msg;n.classList.add('on');setTimeout(function(){n.classList.remove('on');},2800);}
