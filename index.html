@@ -103,9 +103,6 @@
     .exi{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--sur2);border-radius:var(--r);margin-bottom:8px;}
     .exd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
     /* Table */
-    .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
-    .toolbar input,.toolbar select{padding:7px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"Source Sans 3",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
-    .toolbar input{width:200px;}
     .tcard{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.06);}
     .twrap{overflow-x:auto;}
     table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
@@ -368,13 +365,6 @@
 
     <!-- VERTRAGSÜBERSICHT -->
     <div id="tc-vertraege" class="tc on">
-      <div class="toolbar">
-        <input type="text" id="qsearch" placeholder="🔍 Suchen..." oninput="renderV()">
-        <select id="qst" onchange="renderV()"><option value="">Alle Status</option><option>Aktiv</option><option>Läuft bald ab</option><option>Abgelaufen</option><option>Unbekannt</option></select>
-        <select id="qso" onchange="renderV()"><option value="kunde">Kunde A–Z</option><option value="ende">Vertragsende</option><option value="invest">Invest ↓</option></select>
-        <div class="sp"></div>
-        <button class="tbtn" onclick="doCSV()">↓ CSV</button>
-      </div>
       <div class="tcard"><div class="twrap">
         <table><thead><tr>
           <th onclick="sortV('kunde')">Kunde / Vertrag</th>
@@ -563,7 +553,6 @@
 
 <div class="notify" id="notify"></div>
 
-
 <!-- MODAL: PDF Viewer -->
 <div class="mbg" id="pvmodal">
   <div class="modal pv-modal">
@@ -586,8 +575,8 @@ var REDIRECT='https://sai-dealdesk.netlify.app';
 
 /* ── State ── */
 var SB=null,DATA=[],FILTER_FRUEH='all',AM_SEL=[],AM_CAT='Analytics';
-var M_CATS=[]; // selected clusters for matrix (empty = Alle/overview)
-var V_SORT='kunde',V_DIR=1; // 1=asc, -1=desc
+var M_CATS=[];
+var V_SORT='kunde',V_DIR=1;
 var F_SORT='ende',F_DIR=1;
 var pieInst=null,barInst=null;
 var COLORS=['#0083AD','#DC3545','#F59E0B','#22A06B','#7C3AED','#EC4899','#56527A'];
@@ -708,7 +697,6 @@ function fmtD(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('
 function fmtE(v){if(!v)return'—';return Number(v).toLocaleString('de-DE')+' €';}
 function dL(iso){return Math.round((new Date(iso)-new Date())/86400000);}
 function parseDE(s){
-  // Parse TT.MM.JJJJ or JJJJ-MM-TT
   if(!s)return null;
   var m=s.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
   if(m)return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));
@@ -716,7 +704,6 @@ function parseDE(s){
   return isNaN(d)?null:d;
 }
 function calcEnde(r){
-  // Try to calculate end date from angebotsdatum or vertragsbeginn + laufzeit_monate
   var start=parseDE(r.vertragsbeginn)||parseDE(r.angebotsdatum);
   if(!start)return null;
   var monate=r.laufzeit_monate||12;
@@ -725,12 +712,10 @@ function calcEnde(r){
   return ende;
 }
 function stOf(r){
-  // Use stored end date if available
   var endDate=null;
   if(r.vertragsende_iso){
     endDate=new Date(r.vertragsende_iso);
   } else {
-    // Calculate from angebotsdatum/vertragsbeginn + laufzeit
     endDate=calcEnde(r);
   }
   if(!endDate||isNaN(endDate))return{t:'Unbekannt',c:'binfo',col:'#378ADD'};
@@ -740,7 +725,6 @@ function stOf(r){
   return{t:'Aktiv',c:'bok',col:'#1D9E75'};
 }
 function cleanLabel(lbl, fallback){
-  // Ignore label if it's a long description text (>40 chars or contains certain keywords)
   if(!lbl)return fallback;
   if(lbl.length>40||lbl.toLowerCase().includes('finaler')||lbl.toLowerCase().includes('maßnahmen')||lbl.toLowerCase().includes('invest für'))return fallback;
   return lbl;
@@ -801,10 +785,9 @@ async function doLoad(){
     if(r.error){toast('DB-Fehler: '+r.error.message);console.error('Supabase:',r.error);return;}
     DATA=r.data||[];
     renderCEO();renderV();renderMatrix();renderFrueh();
-    // Process pending uploads from SharePoint
     var pending=DATA.filter(function(d){return d.notiz&&d.notiz.indexOf('pending:')===0;});
     if(pending.length)processPending(pending);
-    else autoSlackExpiryCheck(); // Only check expiry if no pending uploads
+    else autoSlackExpiryCheck();
   }catch(e){toast('Verbindungsfehler: '+e.message);console.error('doLoad:',e);}
 }
 
@@ -834,7 +817,6 @@ async function processPending(items){
       };
       await SB.from('kunden').update(row).eq('id',item.id);
       toast('✓ '+parsed.kunde+' verarbeitet ('+(i+1)+'/'+items.length+')');
-      // Auto Slack: neuer Vertrag
       slackNotifyNew(parsed);
     }catch(e){console.error('Pending processing error:',e);toast('⚠ Fehler bei Verarbeitung: '+e.message);}
   }
@@ -862,11 +844,10 @@ async function slackNotifyNew(parsed){
   }catch(e){console.error('Slack notify new error:',e);}
 }
 
-/* ── Auto Slack: Ablauf-Warnung (1x pro Woche pro Vertrag) ── */
+/* ── Auto Slack: Ablauf-Warnung ── */
 async function autoSlackExpiryCheck(){
   var now=new Date();
   var lastCheck=ls('slack_expiry_check');
-  // Nur 1x pro Tag prüfen
   var today=now.toISOString().slice(0,10);
   if(lastCheck===today)return;
 
@@ -878,7 +859,6 @@ async function autoSlackExpiryCheck(){
   });
   if(!expiring.length)return;
 
-  // Prüfen welche diese Woche schon benachrichtigt wurden
   var notified=JSON.parse(ls('slack_notified')||'{}');
   var weekKey=getWeekKey(now);
   var toNotify=expiring.filter(function(r){
@@ -924,13 +904,9 @@ function getWeekKey(d){var t=new Date(d);t.setDate(t.getDate()-t.getDay());retur
 function doTab(t){
   var tabs=['ceo','vertraege','matrix','frueh','master'];
   var titles={'ceo':'Dashboard','vertraege':'Vertragsübersicht','matrix':'Leistungsmatrix','frueh':'Frühwarnsystem','master':'Angebotsmaster'};
-  // Expand sidebar if collapsed
   gi('sidebar').classList.remove('collapsed');
-  // Update sidebar active state
   document.querySelectorAll('.sb-item').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-tab')===t);});
-  // Update content panels
   tabs.forEach(function(x){var el=gi('tc-'+x);if(el)el.classList.toggle('on',x===t);});
-  // Update page title
   gi('page-title').textContent=titles[t]||t;
   if(t==='master')renderAM();
 }
@@ -946,7 +922,6 @@ function renderCEO(){
   var verlQuote=aktiv.length?Math.round((hasVerl/aktiv.length)*100):0;
   gi('k4').textContent=verlQuote+'%';
   gi('k5').innerHTML=(DATA.length*15000).toLocaleString('de-DE')+' € <span class="kbi">geschätzt</span>';
-  // Pie
   var kundenMap={};
   DATA.forEach(function(r){kundenMap[r.kunde]=(kundenMap[r.kunde]||0)+(Number(r.invest_final||r.invest)||0);});
   var kundenList=Object.entries(kundenMap).sort(function(a,b){return b[1]-a[1];});
@@ -954,7 +929,6 @@ function renderCEO(){
   leg.innerHTML=kundenList.map(function(kv,i){return'<span><span class="ldot" style="background:'+COLORS[i%COLORS.length]+'"></span>'+kv[0].split(' ').slice(0,2).join(' ')+'</span>';}).join('');
   if(pieInst)pieInst.destroy();
   pieInst=new Chart(gi('pieC'),{type:'doughnut',data:{labels:kundenList.map(function(kv){return kv[0].split(' ').slice(0,2).join(' ');}),datasets:[{data:kundenList.map(function(kv){return kv[1];}),backgroundColor:COLORS,borderWidth:2,borderColor:'#F7F6F2'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ctx.label+': '+ctx.raw.toLocaleString('de-DE')+' €';}}}}}}); 
-  // Expiring
   var sorted=[...DATA].filter(function(r){return r.vertragsende_iso;}).sort(function(a,b){return dL(a.vertragsende_iso)-dL(b.vertragsende_iso);});
   gi('explist').innerHTML=sorted.slice(0,4).map(function(r){
     var d=dL(r.vertragsende_iso);
@@ -962,21 +936,16 @@ function renderCEO(){
     var bg=d<=90?'background:#FFE0E0;color:#7B2020':d<=180?'background:#FFF3CD;color:#7B5E1A':'background:#D8F3DC;color:#2D6A4F';
     return'<div class="exi"><div class="exd" style="background:'+col+'"></div><div style="flex:1"><div style="font-weight:500;font-size:13px">'+r.kunde.split(' ').slice(0,2).join(' ')+'</div><div style="font-size:11px;color:var(--tx3)">Endet am '+fmtD(r.vertragsende_iso)+'</div></div><div style="text-align:right"><div style="font-weight:500;font-size:12px">'+(r.invest_final_label||fmtE(r.invest_final||r.invest))+'</div><span style="'+bg+';font-size:11px;font-weight:500;padding:2px 7px;border-radius:999px;">'+d+' Tage</span></div></div>';
   }).join('')||'<div class="empty" style="padding:1rem">Keine Daten</div>';
-  // Bar top leistungen
   var lc={};DATA.forEach(function(r){(r.leistungen||[]).forEach(function(l){lc[l]=(lc[l]||0)+1;});});
   var top=Object.entries(lc).sort(function(a,b){return b[1]-a[1];}).slice(0,5);
   if(barInst)barInst.destroy();
   barInst=new Chart(gi('barC'),{type:'bar',data:{labels:top.map(function(x){return x[0];}),datasets:[{data:top.map(function(x){return x[1];}),backgroundColor:'#1A1916',borderRadius:4}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{stepSize:1,font:{size:11}},grid:{color:'rgba(0,0,0,.04)'}},y:{ticks:{font:{size:11}},grid:{display:false}}}}});
 }
 
-/* ── Vertragsübersicht (eine Zeile pro Vertrag) ── */
+/* ── Vertragsübersicht — nutzt getFilteredData() ── */
 function renderV(){
-  var q=(gv('qsearch')||'').toLowerCase(),fs=gi('qst').value,sc=gi('qso').value;
-  var rows=DATA.filter(function(r){
-    if(q&&!r.kunde.toLowerCase().includes(q)&&!(r.angebotsnr||'').toLowerCase().includes(q))return false;
-    if(fs&&stOf(r).t!==fs)return false;
-    return true;
-  });
+  var rows=getFilteredData();
+
   // Sort
   rows.sort(function(a,b){
     var v=0;
@@ -989,7 +958,8 @@ function renderV(){
     else if(V_SORT==='status')v=stOf(a).t.localeCompare(stOf(b).t);
     return v*V_DIR;
   });
-  // Update header arrows
+
+  // Update header sort arrows
   document.querySelectorAll('#tc-vertraege thead th').forEach(function(th){th.classList.remove('sort-asc','sort-desc');});
   var thMap={'kunde':0,'datum':2,'beginn':3,'laufzeit':4,'ende':5,'invest':6,'status':7};
   var thIdx=thMap[V_SORT];
@@ -997,6 +967,7 @@ function renderV(){
     var ths=document.querySelectorAll('#tc-vertraege thead th');
     if(ths[thIdx])ths[thIdx].classList.add(V_DIR===1?'sort-asc':'sort-desc');
   }
+
   var tb=gi('vtbody');
   if(!rows.length){tb.innerHTML='<tr><td colspan="10"><div class="empty">Keine Verträge gefunden.</div></td></tr>';return;}
   tb.innerHTML=rows.map(function(r){
@@ -1021,7 +992,7 @@ function renderV(){
   }).join('');
 }
 
-/* ── Leistungsmatrix (eine Zeile pro Kunde, Maßnahmen zusammengeführt) ── */
+/* ── Leistungsmatrix ── */
 var CATS_LIST=['Analytics','Operativ','Consulting','Amazon','Reporting','Knowledge','International'];
 var CAT_COLORS={'Analytics':'#0083AD','Operativ':'#22A06B','Consulting':'#F59E0B','Amazon':'#DC3545','Reporting':'#7C3AED','Knowledge':'#EC4899','International':'#56527A'};
 
@@ -1032,18 +1003,15 @@ function toggleMatrixCat(cat){
 }
 
 function renderMatrix(){
-  // Kunden deduplizieren
   var kundenMap={};
   DATA.forEach(function(r){
     if(!kundenMap[r.kunde])kundenMap[r.kunde]=new Set();
     (r.leistungen||[]).forEach(function(l){kundenMap[r.kunde].add(l);});
   });
-  // Stats
   var totalMods=Object.values(kundenMap).reduce(function(a,s){return a+s.size;},0);
   var numKunden=Object.keys(kundenMap).length;
   gi('mmod').textContent=totalMods;
   gi('mavg').textContent=numKunden?(totalMods/numKunden).toFixed(1):'—';
-  // Cluster buttons (Alle zuerst, dann die 7 Cluster)
   var isAlle=M_CATS.length===0;
   var mfEl=gi('mfilt');
   mfEl.innerHTML='<span style="font-size:12px;color:var(--tx2)">Cluster:</span>'+
@@ -1055,7 +1023,6 @@ function renderMatrix(){
   var tbody='';
 
   if(isAlle){
-    // ── Cluster-Übersicht: 7 Spalten = die Cluster ──
     CATS_LIST.forEach(function(cat){
       thead+='<th style="text-align:center;border-top:3px solid '+CAT_COLORS[cat]+';min-width:100px;white-space:normal">'+cat+'</th>';
     });
@@ -1064,11 +1031,9 @@ function renderMatrix(){
       var lSet=kundenMap[kunde];
       tbody+='<tr><td class="kn">'+kunde+'</td>';
       CATS_LIST.forEach(function(cat){
-        // Check if customer has ANY module in this cluster
         var catMods=AM_DATA[cat]?AM_DATA[cat].map(function(m){return m.name;}):[];
         var hasAny=false;
         lSet.forEach(function(l){if(catMods.indexOf(l)>=0||AM_CLUSTER[l]===cat)hasAny=true;});
-        // Count how many
         var count=0;
         lSet.forEach(function(l){if(catMods.indexOf(l)>=0||AM_CLUSTER[l]===cat)count++;});
         tbody+='<td style="text-align:center">'+(hasAny?'<span class="mck" title="'+count+' Modul'+(count>1?'e':'')+'">✓ <span style="font-size:10px;color:var(--tx3)">'+count+'</span></span>':'<span class="mem">·</span>')+'</td>';
@@ -1076,15 +1041,12 @@ function renderMatrix(){
       tbody+='</tr>';
     });
   } else {
-    // ── Detailansicht: einzelne Module der ausgewählten Cluster ──
     var allLeistungen=[];
     M_CATS.forEach(function(cat){
       var catMods=AM_DATA[cat]?AM_DATA[cat].map(function(m){return m.name;}):[];
-      // Also include leistungen mapped to this cluster
       Object.values(kundenMap).forEach(function(s){s.forEach(function(l){if(AM_CLUSTER[l]===cat&&catMods.indexOf(l)<0)catMods.push(l);});});
       catMods.forEach(function(m){
         if(allLeistungen.indexOf(m)<0){
-          // Only include if at least one customer has it
           var used=false;Object.values(kundenMap).forEach(function(s){if(s.has(m))used=true;});
           if(used)allLeistungen.push(m);
         }
@@ -1099,7 +1061,6 @@ function renderMatrix(){
     thead+='</tr>';
     sortedKunden.forEach(function(kunde){
       var lSet=kundenMap[kunde];
-      // Only show customers that have at least one module in selected clusters
       var relevant=false;
       allLeistungen.forEach(function(l){if(lSet.has(l))relevant=true;});
       if(!relevant)return;
@@ -1257,7 +1218,6 @@ function doExportAngebot(){
   var items=AM_SEL.map(function(id){
     var found=null;Object.values(AM_DATA).forEach(function(arr){arr.forEach(function(m){if(m.id===id)found=m;});});return found;
   }).filter(Boolean);
-  // Build print-friendly HTML
   var html='<!DOCTYPE html><html lang="de"><head><meta charset="UTF-8"><title>Angebot '+kunde+'</title>'+
     '<style>body{font-family:Arial,sans-serif;font-size:12px;padding:2rem;max-width:900px;margin:0 auto;}'+
     'h1{font-size:22px;font-weight:bold;text-align:center;margin-bottom:4px;}'+
@@ -1302,8 +1262,6 @@ function doExportAngebot(){
 
 /* ── PDF Upload ── */
 var UPLOAD_CANCELLED=false;
-var UPLOAD_QUEUE=[];  // {file, parsed, existing}
-var UPLOAD_IDX=0;
 
 function cancelUpload(){
   UPLOAD_CANCELLED=true;
@@ -1312,7 +1270,6 @@ function cancelUpload(){
   toast('Upload abgebrochen');
 }
 
-/* Show review modal for one parsed contract – returns Promise resolved with edited parsed object or null */
 var RV_LEIST=[];
 function rvAddL(){var inp=gi('rv-lnew'),v=inp.value.trim();if(!v)return;if(RV_LEIST.indexOf(v)<0)RV_LEIST.push(v);inp.value='';rvRenderL();}
 function rvRemL(idx){RV_LEIST.splice(idx,1);rvRenderL();}
@@ -1336,7 +1293,6 @@ function showReview(parsed, file, existing){
         '<div class="rv-l">Notiz</div><div class="rv-v"><textarea id="rv-notiz" rows="2">'+esc(parsed.notiz||'')+'</textarea></div>'+
       '</div>';
     rvRenderL();
-    // Duplicate info
     if(existing){
       dup.style.display='block';
       dup.innerHTML='<div class="dup-box"><div style="font-weight:600;font-size:13px;margin-bottom:4px">⚠ Vertrag bereits vorhanden</div>'+
@@ -1348,7 +1304,6 @@ function showReview(parsed, file, existing){
       dup.style.display='none';
       gi('rv-save').textContent='✓ Speichern';
     }
-    // Wire buttons
     gi('rv-skip').onclick=function(){gi('rvmodal').classList.remove('on');resolve(null);};
     gi('rv-save').onclick=function(){
       var kunde=gi('rv-kunde').value.trim();
@@ -1388,9 +1343,7 @@ async function doPDF(input){
       var parsed=await doExtract(b64);
       if(UPLOAD_CANCELLED)break;
       if(parsed){
-        // Hide progress, show review
         gi('upmodal').classList.remove('on');
-        // Check for duplicate
         var existing=null;
         if(parsed.angebotsnr){
           existing=DATA.find(function(r){return r.angebotsnr&&r.angebotsnr.trim()===parsed.angebotsnr.trim();});
@@ -1398,33 +1351,29 @@ async function doPDF(input){
         var action=await showReview(parsed,files[i],existing||null);
         if(UPLOAD_CANCELLED)break;
         if(!action){toast('⏭ '+(parsed.kunde||'Vertrag')+' übersprungen');if(i<files.length-1)gi('upmodal').classList.add('on');continue;}
-        // Use edited values
         parsed=action;
-        // Show progress again for saving
         gi('upmodal').classList.add('on');
         setP('Speichere: '+parsed.kunde,((i+0.5)/files.length)*100);
         if(existing){
-          // Update existing
           if(existing.pdf_url){try{await SB.storage.from('vertraege').remove([existing.pdf_url]);}catch(e){}}
           var pdfUrl=null;
           try{
             var fname=Date.now()+'_'+files[i].name.replace(/[^a-zA-Z0-9._-]/g,'_');
             var up=await SB.storage.from('vertraege').upload(fname,files[i],{contentType:'application/pdf',upsert:false});
             if(up.error){console.error('Storage upload error:',up.error);toast('⚠ PDF-Speicher: '+up.error.message);}
-            else{pdfUrl=fname;console.log('PDF uploaded:',fname);}
+            else{pdfUrl=fname;}
           }catch(e){console.error('Storage exception:',e);toast('⚠ PDF-Speicher: '+e.message);}
           var row=buildRow(parsed,pdfUrl);
           var upd=await SB.from('kunden').update(row).eq('id',existing.id);
           if(upd.error)throw new Error(upd.error.message);
           await doLoad();toast('✓ '+parsed.kunde+' aktualisiert'+(pdfUrl?' (mit PDF)':' (ohne PDF)'));
         } else {
-          // New record
           var pdfUrl=null;
           try{
             var fname=Date.now()+'_'+files[i].name.replace(/[^a-zA-Z0-9._-]/g,'_');
             var up=await SB.storage.from('vertraege').upload(fname,files[i],{contentType:'application/pdf',upsert:false});
             if(up.error){console.error('Storage upload error:',up.error);toast('⚠ PDF-Speicher: '+up.error.message);}
-            else{pdfUrl=fname;console.log('PDF uploaded:',fname);}
+            else{pdfUrl=fname;}
           }catch(e){console.error('Storage exception:',e);toast('⚠ PDF-Speicher: '+e.message);}
           var row=buildRow(parsed,pdfUrl);
           var ins=await SB.from('kunden').insert([row]);
@@ -1433,7 +1382,6 @@ async function doPDF(input){
         }
       }
     }catch(e){toast('Fehler: '+e.message);}
-    // Re-show progress for next file
     if(i<files.length-1&&!UPLOAD_CANCELLED){gi('upmodal').classList.add('on');}
   }
   if(!UPLOAD_CANCELLED){setP('Fertig',100);setTimeout(function(){gi('upmodal').classList.remove('on');},800);}
@@ -1529,7 +1477,7 @@ function doCSV(){
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);a.download='dealdesk_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
 
-/* ── PDF Viewer (eingebettet, kein Download) ── */
+/* ── PDF Viewer ── */
 async function openPDF(fname){
   try{
     gi('pv-title').textContent='Lade PDF…';
@@ -1537,7 +1485,6 @@ async function openPDF(fname){
     gi('pvmodal').classList.add('on');
     var r=await SB.storage.from('vertraege').createSignedUrl(fname,3600);
     if(r.data&&r.data.signedUrl){
-      // Find customer name for title
       var entry=DATA.find(function(d){return d.pdf_url===fname;});
       gi('pv-title').textContent=entry?(entry.kunde+' – '+(entry.angebotsnr||'Vertrag')):'Vertrag';
       gi('pv-frame').src=r.data.signedUrl;
@@ -1580,7 +1527,6 @@ function chatAddMsg(role,text){
 }
 
 function buildDataContext(){
-  // Build a concise summary of all contract data for Claude
   var lines=DATA.map(function(r){
     var status=stOf(r).t;
     var leist=(r.leistungen||[]).join(', ');
@@ -1601,7 +1547,6 @@ async function chatSend(){
   chatAddMsg('user',q);
   CHAT_HISTORY.push({role:'user',content:q});
 
-  // Typing indicator
   var typ=document.createElement('div');
   typ.className='chat-typing';typ.textContent='Denke nach…';
   gi('chat-msgs').appendChild(typ);
@@ -1614,7 +1559,6 @@ async function chatSend(){
       'Wenn du etwas nicht aus den Daten beantworten kannst, sage das ehrlich.\n\n'+
       buildDataContext();
 
-    // Send last 10 messages as conversation history
     var hist=CHAT_HISTORY.slice(-10);
 
     var resp=await fetch('/api/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1632,14 +1576,14 @@ async function chatSend(){
   }catch(e){
     typ.remove();
     chatAddMsg('bot','❌ Fehler: '+e.message);
-    CHAT_HISTORY.pop(); // Remove failed user message from history
+    CHAT_HISTORY.pop();
   }
   CHAT_BUSY=false;
   gi('chat-btn').disabled=false;
   gi('chat-in').focus();
 }
 
-/* ── Slack Alerts ── */
+/* ── Slack ── */
 var SLACK_CHANNELS=null;
 
 async function loadSlackChannels(){
@@ -1654,14 +1598,11 @@ async function loadSlackChannels(){
 }
 
 function matchChannel(kunde,channels){
-  // Try to match customer name to Slack channel
   var name=kunde.toLowerCase()
     .replace(/gmbh|&\s*co\.?\s*kg|ag|se|e\.v\.?|inc\.?|ltd\.?|deutschland|pharma|arzneimittel|heilmittel|vital|pütter|ingelheim|vetmedica/gi,'')
     .trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');
-  // Direct match
   var ch=channels.find(function(c){return c.name===name;});
   if(ch)return ch;
-  // Partial match - channel contains customer keyword or vice versa
   var parts=name.split('-').filter(function(p){return p.length>2;});
   for(var i=0;i<parts.length;i++){
     ch=channels.find(function(c){return c.name===parts[i]||c.name.indexOf(parts[i])>=0;});
@@ -1682,7 +1623,6 @@ async function sendSlackAlerts(){
     var st=stOf(r);
     if(!st.end)return;
     var diff=Math.floor((st.end-now)/(1000*60*60*24));
-    // Rot: <90 Tage, Gelb: <180 Tage
     if(diff>180||diff<0)return;
 
     var ch=matchChannel(r.kunde,channels);
@@ -1706,7 +1646,6 @@ async function sendSlackAlerts(){
 
   if(!alerts.length){toast('✓ Keine Alerts nötig (alle Verträge >180 Tage)');return;}
 
-  // Confirm before sending
   if(!confirm(alerts.length+' Alert(s) werden an Slack gesendet:\n\n'+alerts.map(function(a){return'→ #'+a.channel.name+' ('+a.kunde+', '+a.diff+' Tage)';}).join('\n')+'\n\nSenden?'))return;
 
   for(var i=0;i<alerts.length;i++){
@@ -1720,19 +1659,20 @@ async function sendSlackAlerts(){
   toast('✓ '+sent+' Alert(s) gesendet'+(skipped?' ('+skipped+' übersprungen)':''));
 }
 
-/* ── Org-Dropdown (Platzhalter) ── */
+/* ── Org-Dropdown ── */
 function onOrgChange(val){toast('Unternehmen: '+gi('org-select').options[gi('org-select').selectedIndex].text+' (kommt bald)');}
 
-/* ── Expandable Search ── */
+/* ── Search ── */
 function openSearch(){var s=gi('mt-search');if(!s.classList.contains('open')){s.classList.add('open');gi('mt-search-in').focus();}}
 function closeSearch(){setTimeout(function(){var s=gi('mt-search');var inp=gi('mt-search-in');if(!inp.value)s.classList.remove('open');},200);}
-function doGlobalSearch(v){var q=gi('qsearch');if(q){q.value=v;renderV();renderFrueh();}}
+function doGlobalSearch(v){renderV();renderFrueh();}
 
 /* ── Global Filter ── */
 function toggleFilter(){gi('mt-filter-drop').classList.toggle('open');}
 function applyGlobalFilter(){renderV();renderFrueh();renderMatrix();}
 function resetGlobalFilter(){
   gi('gf-status').value='';gi('gf-kunde').value='';gi('gf-module').value='';gi('gf-invest').value='';gi('gf-tage').value='';
+  gi('mt-search-in').value='';
   applyGlobalFilter();gi('mt-filter-drop').classList.remove('open');
 }
 function getFilteredData(){
@@ -1748,7 +1688,7 @@ function getFilteredData(){
   if(fk)d=d.filter(function(r){return(r.kunde||'').toLowerCase().indexOf(fk)>=0;});
   if(fm)d=d.filter(function(r){return(r.leistungen||[]).some(function(l){return l.toLowerCase().indexOf(fm)>=0;});});
   if(fi)d=d.filter(function(r){return(r.invest_final||r.invest||0)>=fi;});
-  if(ft){var now=new Date();d=d.filter(function(r){var st=stOf(r);if(!st.end)return false;var diff=Math.floor((st.end-now)/(1000*60*60*24));return diff<=ft&&diff>0;});}
+  if(ft){var now=new Date();d=d.filter(function(r){if(!r.vertragsende_iso)return false;var diff=Math.floor((new Date(r.vertragsende_iso)-now)/(1000*60*60*24));return diff<=ft&&diff>0;});}
   return d;
 }
 
