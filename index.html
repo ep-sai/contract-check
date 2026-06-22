@@ -767,7 +767,11 @@ function showApp(){
   gi('ls').style.display='none';gi('app').style.display='flex';
   var u=ls('ms_user');if(u){try{var p=JSON.parse(u);gi('uname').textContent=p.name||p.email;var n=(p.name||p.email||'');gi('sb-avatar').textContent=n.split(' ').map(function(w){return w[0];}).join('').toUpperCase().slice(0,2);}catch(e){}}
   SB=window.supabase.createClient(SB_URL,SB_KEY);
-  doLoad();
+  doLoad().then(function(){
+    var params=new URLSearchParams(window.location.search);
+    var sp=params.get('search');
+    if(sp){var inp=gi('mt-search-in');if(inp){inp.value=sp;openSearch();doGlobalSearch(sp);}}
+  });
   checkStorage();
 }
 async function checkStorage(){
@@ -832,13 +836,15 @@ async function slackNotifyNew(parsed){
     if(!ch)return;
     var leist=(parsed.leistungen||[]).join(', ')||'—';
     var invest=parsed.invest_final||parsed.invest||'—';
+    var link='https://sai-dealdesk.netlify.app?search='+encodeURIComponent(parsed.angebotsnr||parsed.kunde);
     var msg='🆕 *Neuer Vertrag in DealDesk!*\n'+
       '• Kunde: *'+parsed.kunde+'*\n'+
       '• Angebotsnr: '+(parsed.angebotsnr||'—')+'\n'+
       '• Vertragsbeginn: '+(parsed.vertragsbeginn||'—')+'\n'+
       '• Laufzeit: '+(parsed.laufzeit||'—')+'\n'+
       '• Invest: '+fmtE(invest)+' '+(parsed.invest_rhythmus==='monatlich'?'mtl.':'p.a.')+'\n'+
-      '• Leistungen: '+leist;
+      '• Leistungen: '+leist+'\n'+
+      '🔗 <'+link+'|In DealDesk öffnen>';
     await fetch('/api/slack',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({action:'send',channel:ch.id,text:msg})});
   }catch(e){console.error('Slack notify new error:',e);}
@@ -1387,6 +1393,11 @@ async function doPDF(input){
   if(!UPLOAD_CANCELLED){setP('Fertig',100);setTimeout(function(){gi('upmodal').classList.remove('on');},800);}
 }
 function buildRow(parsed,pdfUrl){
+  // Enddatum berechnen falls nicht vorhanden
+  if(!parsed.vertragsende_iso&&parsed.vertragsbeginn){
+    var sd=parseDE(parsed.vertragsbeginn);
+    if(sd){var ed=new Date(sd);ed.setMonth(ed.getMonth()+(parsed.laufzeit_monate||12));parsed.vertragsende_iso=ed.toISOString().slice(0,10);}
+  }
   var row={
     kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
     vertragsbeginn:parsed.vertragsbeginn,laufzeit:parsed.laufzeit,laufzeit_monate:parsed.laufzeit_monate||12,
@@ -1633,13 +1644,15 @@ async function sendSlackAlerts(){
     var invest=r.invest_final||r.invest||'—';
     var rhythmus=r.invest_rhythmus==='monatlich'?'mtl.':'p.a.';
 
+    var link='https://sai-dealdesk.netlify.app?search='+encodeURIComponent(r.angebotsnr||r.kunde);
     var msg=emoji+' *Vertrag läuft bald ab!*\n'+
       '• Kunde: *'+r.kunde+'*\n'+
       '• Angebotsnr: '+r.angebotsnr+'\n'+
       '• Vertragsende: '+fmtD(r.vertragsende_iso)+' (noch *'+diff+' Tage*)\n'+
       '• Invest: '+fmtE(invest)+' '+rhythmus+'\n'+
       '• Leistungen: '+leist+'\n'+
-      '➡️ Bitte Verlängerung besprechen!';
+      '➡️ Bitte Verlängerung besprechen!\n'+
+      '🔗 <'+link+'|In DealDesk öffnen>';
 
     alerts.push({channel:ch,message:msg,kunde:r.kunde,diff:diff});
   });
