@@ -1,8 +1,23 @@
-[build]
-  publish = "."
-  functions = "netlify/functions"
+[functions]
+  directory = "netlify/functions"
+
+[functions."sharepoint-upload"]
+  timeout = 26
+
+[functions."anthropic"]
+  timeout = 26
 
 [[redirects]]
   from = "/api/anthropic"
   to = "/.netlify/functions/anthropic"
+  status = 200
+
+[[redirects]]
+  from = "/api/sharepoint-upload"
+  to = "/.netlify/functions/sharepoint-upload"
+  status = 200
+
+[[redirects]]
+  from = "/api/slack"
+  to = "/.netlify/functions/slack"
   status = 200
