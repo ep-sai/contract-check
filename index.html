@@ -4,55 +4,55 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>DealDesk</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js" onerror="document.getElementById('login-err').textContent='Fehler: Microsoft Auth konnte nicht geladen werden.'"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    :root{--bg:#F7F6F2;--sur:#fff;--sur2:#F0EEE8;--bdr:#E2DED6;--bdr2:#CCC8BE;--tx:#1A1916;--tx2:#6B6860;--tx3:#9E9B93;--ac:#1A1916;--acfg:#F7F6F2;--green:#2D6A4F;--gbg:#D8F3DC;--amber:#7B5E1A;--abg:#FFF3CD;--red:#7B2020;--rbg:#FFE0E0;--blue:#1A4A7B;--bbg:#E0EEFF;--r:8px;--rl:12px;}
+    :root{--bg:#F8FAFC;--sur:#fff;--sur2:#F1F5F9;--bdr:#E2E8F0;--bdr2:#CBD5E1;--tx:#0F172A;--tx2:#64748B;--tx3:#94A3B8;--ac:#0D9488;--acfg:#fff;--navy:#0F172A;--navybg:#1E293B;--green:#059669;--gbg:#D1FAE5;--amber:#D97706;--abg:#FEF3C7;--red:#DC2626;--rbg:#FEE2E2;--blue:#0284C7;--bbg:#E0F2FE;--r:8px;--rl:12px;}
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:"DM Sans",sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;}
+    body{font-family:"Inter",sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;font-size:14px;}
     /* Login */
     #ls{display:none;align-items:center;justify-content:center;min-height:100vh;padding:2rem;}
     .lc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:3rem 2.5rem;max-width:400px;width:100%;text-align:center;}
     .lc h1{font-size:26px;font-weight:600;margin-bottom:6px;}
     .lc p{color:var(--tx2);font-size:14px;margin-bottom:2rem;}
-    .msb{background:#0078d4;color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:"DM Sans",sans-serif;display:inline-flex;align-items:center;gap:10px;}
+    .msb{background:var(--ac);color:#fff;border:none;border-radius:var(--r);padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;font-family:"Inter",sans-serif;display:inline-flex;align-items:center;gap:10px;}
     .msb:hover{opacity:.85;}
     .lerr{color:var(--red);font-size:13px;margin-top:12px;min-height:18px;}
     /* App */
     #app{display:none;flex-direction:column;height:100vh;overflow:hidden;}
-    .topbar{background:var(--sur);border-bottom:1px solid var(--bdr);padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
-    .logo{font-size:18px;font-weight:600;letter-spacing:-.3px;}
-    .logo span{color:var(--tx3);font-weight:400;}
+    .topbar{background:var(--navy);border-bottom:none;padding:0 2rem;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100;}
+    .logo{font-size:18px;font-weight:700;letter-spacing:-.3px;color:#fff;}
+    .logo span{color:var(--ac);font-weight:600;}
     .sp{flex:1;}
-    .tbtn{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 14px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--tx);display:flex;align-items:center;gap:6px;white-space:nowrap;}
-    .tbtn:hover{background:var(--sur2);}
+    .tbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);padding:6px 14px;font-family:"Inter",sans-serif;font-size:13px;cursor:pointer;color:#fff;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+    .tbtn:hover{background:rgba(255,255,255,.2);}
     .tbtn.pri{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
     .tbtn.pri:hover{opacity:.85;}
     .tabs{display:flex;border-bottom:1px solid var(--bdr);background:var(--sur);overflow-x:auto;}
-    .tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 20px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--tx2);margin-bottom:-1px;white-space:nowrap;}
+    .tab{background:none;border:none;border-bottom:2px solid transparent;padding:10px 20px;font-family:"Inter",sans-serif;font-size:13px;font-weight:500;cursor:pointer;color:var(--tx2);margin-bottom:-1px;white-space:nowrap;}
     .tab:hover{color:var(--tx);}
-    .tab.on{color:var(--tx);border-bottom-color:var(--ac);}
+    .tab.on{color:var(--ac);border-bottom-color:var(--ac);font-weight:600;}
     .tab.dis{color:var(--bdr2);cursor:not-allowed;opacity:.5;}
     .tab.dis:hover{color:var(--bdr2);}
-    .org-sel{appearance:none;-webkit-appearance:none;background:var(--sur) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239E9B93'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 28px 6px 10px;font-family:"DM Sans",sans-serif;font-size:12px;cursor:pointer;color:var(--tx);outline:none;}
-    .org-sel:hover{background-color:var(--sur2);}
+    .org-sel{appearance:none;-webkit-appearance:none;background:rgba(255,255,255,.1) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2394A3B8'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid rgba(255,255,255,.2);border-radius:var(--r);padding:6px 28px 6px 10px;font-family:"Inter",sans-serif;font-size:12px;cursor:pointer;color:#fff;outline:none;}
+    .org-sel:hover{background:rgba(255,255,255,.2);}
     .main{padding:2rem;max-width:1400px;margin:0 auto;}
     .tc{display:none;}
     .tc.on{display:block;}
     /* KPI */
-    .kgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:1.5rem;}
-    .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1.25rem 1.5rem;}
-    .kl{font-size:11px;font-weight:500;color:var(--tx3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
-    .kv{font-size:24px;font-weight:600;letter-spacing:-.5px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
-    .kbp{font-size:11px;font-weight:500;padding:2px 6px;border-radius:var(--r);background:var(--gbg);color:var(--green);}
-    .kbi{font-size:11px;font-weight:500;padding:2px 6px;border-radius:var(--r);background:var(--bbg);color:var(--blue);}
+    .kgrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-bottom:1.5rem;}
+    .kpi{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1.25rem 1.5rem;box-shadow:0 1px 3px rgba(15,23,42,.06);}
+    .kl{font-size:10px;font-weight:600;color:var(--tx3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;}
+    .kv{font-size:26px;font-weight:700;letter-spacing:-.5px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+    .kbp{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--gbg);color:var(--green);}
+    .kbi{font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--bbg);color:var(--blue);}
     /* Charts */
-    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
-    .cc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1.25rem;}
+    .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;}
+    .cc{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1.25rem;box-shadow:0 1px 3px rgba(15,23,42,.06);}
     .cf{grid-column:1/-1;}
-    .ct{font-size:13px;font-weight:600;margin-bottom:1rem;}
+    .ct{font-size:14px;font-weight:600;margin-bottom:1rem;}
     .leg{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;font-size:11px;color:var(--tx2);}
     .leg span{display:flex;align-items:center;gap:4px;}
     .ldot{width:8px;height:8px;border-radius:2px;flex-shrink:0;}
@@ -61,9 +61,9 @@
     .exd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
     /* Table */
     .toolbar{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap;}
-    .toolbar input,.toolbar select{padding:7px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+    .toolbar input,.toolbar select{padding:7px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"Inter",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
     .toolbar input{width:200px;}
-    .tcard{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;}
+    .tcard{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.06);}
     .twrap{overflow-x:auto;}
     table{width:100%;border-collapse:collapse;font-size:13px;min-width:900px;}
     thead th{background:var(--sur2);color:var(--tx2);font-weight:500;padding:9px 12px;text-align:left;border-bottom:1px solid var(--bdr);font-size:11px;text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;cursor:pointer;user-select:none;}
@@ -83,7 +83,7 @@
     .ic:hover{color:var(--tx);background:var(--sur2);}
     .ic.del:hover{color:var(--red);}
     /* Matrix */
-    .sbar{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1rem 1.5rem;display:flex;align-items:center;gap:2rem;margin-bottom:1rem;flex-wrap:wrap;}
+    .sbar{background:var(--sur);border:1px solid var(--bdr);border-radius:var(--rl);padding:1rem 1.5rem;display:flex;align-items:center;gap:2rem;margin-bottom:1rem;flex-wrap:wrap;box-shadow:0 1px 3px rgba(15,23,42,.06);}
     .sbi{display:flex;flex-direction:column;gap:2px;}
     .sbl{font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:.4px;}
     .sbv{font-size:18px;font-weight:600;}
@@ -108,8 +108,8 @@
     .wban{background:var(--abg);border:1px solid #E0C56A;border-radius:var(--rl);padding:1rem 1.25rem;display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;}
     .wbtit{font-weight:600;font-size:13px;color:var(--amber);}
     .wbsub{font-size:12px;color:var(--amber);opacity:.85;margin-top:2px;}
-    .vbtn{background:var(--amber);color:#fff;border:none;border-radius:var(--r);padding:7px 16px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
-    .abt{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:4px 10px;font-size:11px;cursor:pointer;color:var(--tx);font-family:"DM Sans",sans-serif;}
+    .vbtn{background:var(--amber);color:#fff;border:none;border-radius:var(--r);padding:7px 16px;font-family:"Inter",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+    .abt{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:4px 10px;font-size:11px;cursor:pointer;color:var(--tx);font-family:"Inter",sans-serif;}
     .abt:hover{background:var(--sur2);}
     .abt.grn{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
     /* Angebotsmaster */
@@ -117,7 +117,7 @@
     .amsid{background:var(--sur2);border-right:1px solid var(--bdr);padding:1rem;}
     .amcat{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--tx3);padding:8px 10px 4px;margin-top:8px;}
     .amcat:first-child{margin-top:0;}
-    .amcatbtn{display:block;width:100%;background:none;border:none;text-align:left;padding:6px 10px;border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--tx2);}
+    .amcatbtn{display:block;width:100%;background:none;border:none;text-align:left;padding:6px 10px;border-radius:var(--r);font-family:"Inter",sans-serif;font-size:13px;cursor:pointer;color:var(--tx2);}
     .amcatbtn:hover{background:var(--bdr);}
     .amcatbtn.on{background:var(--ac);color:var(--acfg);}
     .amcont{padding:1.5rem;overflow-y:auto;max-height:70vh;}
@@ -137,25 +137,25 @@
     .modal h3{font-size:17px;font-weight:600;margin-bottom:1.25rem;}
     .fg{margin-bottom:14px;}
     .fg label{font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:4px;display:block;}
-    .fg input,.fg textarea,.fg select{width:100%;padding:8px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;resize:vertical;}
+    .fg input,.fg textarea,.fg select{width:100%;padding:8px 10px;border:1px solid var(--bdr2);border-radius:var(--r);font-family:"Inter",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;resize:vertical;}
     .fg input:focus,.fg textarea:focus{border-color:var(--ac);}
     .frow{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
     .mact{display:flex;gap:10px;justify-content:flex-end;margin-top:1.5rem;}
-    .sbtn{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;cursor:pointer;color:var(--tx);}
+    .sbtn{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:8px 18px;font-family:"Inter",sans-serif;font-size:13px;cursor:pointer;color:var(--tx);}
     .sbtn:hover{background:var(--sur2);}
-    .btn{background:var(--ac);color:var(--acfg);border:none;border-radius:var(--r);padding:8px 18px;font-family:"DM Sans",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+    .btn{background:var(--ac);color:var(--acfg);border:none;border-radius:var(--r);padding:8px 18px;font-family:"Inter",sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
     .ltag{display:inline-flex;align-items:center;gap:5px;background:var(--sur2);border:1px solid var(--bdr);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--tx2);}
     .ltag button{background:none;border:none;cursor:pointer;color:var(--tx3);font-size:14px;line-height:1;padding:0;}
     /* Misc */
     .uprog{font-size:13px;color:var(--tx2);text-align:center;padding:8px;}
     .empty{text-align:center;padding:4rem 2rem;color:var(--tx3);}
-    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--ac);color:var(--acfg);border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:1001;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;}
+    .notify{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:#fff;border-radius:var(--r);padding:10px 18px;font-size:13px;z-index:1001;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none;box-shadow:0 4px 12px rgba(15,23,42,.15);}
     .notify.on{opacity:1;transform:translateY(0);}
     /* Review Modal */
     .rv-grid{display:grid;grid-template-columns:130px 1fr;gap:0;font-size:13px;}
     .rv-l{padding:8px 12px;color:var(--tx3);font-size:12px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;}
     .rv-v{padding:6px 12px;border-bottom:1px solid var(--bdr);}
-    .rv-v input,.rv-v select,.rv-v textarea{width:100%;padding:6px 8px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+    .rv-v input,.rv-v select,.rv-v textarea{width:100%;padding:6px 8px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"Inter",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
     .rv-v input:focus,.rv-v textarea:focus{border-color:var(--ac);}
     .rv-v textarea{resize:vertical;min-height:40px;}
     .rv-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}
@@ -173,25 +173,25 @@
     .app-content{flex:1;overflow-y:auto;min-width:0;}
     .chat-side{width:380px;flex-shrink:0;border-left:1px solid var(--bdr);background:var(--sur);display:flex;flex-direction:column;font-size:13px;transition:margin-right .25s ease;overflow:hidden;}
     .chat-side.closed{margin-right:-380px;}
-    .chat-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;}
-    .chat-head h3{font-size:13px;font-weight:600;flex:1;margin:0;white-space:nowrap;}
+    .chat-head{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--bdr);gap:10px;flex-shrink:0;background:var(--navy);color:#fff;}
+    .chat-head h3{font-size:13px;font-weight:600;flex:1;margin:0;white-space:nowrap;color:#fff;}
     .chat-msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
     .chat-msg{max-width:88%;padding:10px 14px;border-radius:14px;line-height:1.5;word-wrap:break-word;white-space:pre-wrap;}
-    .chat-msg.user{align-self:flex-end;background:var(--ac);color:var(--acfg);border-bottom-right-radius:4px;}
+    .chat-msg.user{align-self:flex-end;background:var(--ac);color:#fff;border-bottom-right-radius:4px;}
     .chat-msg.bot{align-self:flex-start;background:var(--sur2);color:var(--tx);border-bottom-left-radius:4px;}
     .chat-typing{align-self:flex-start;padding:10px 14px;color:var(--tx3);font-size:12px;}
     .chat-input{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bdr);flex-shrink:0;background:var(--sur);}
-    .chat-input input{flex:1;padding:10px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"DM Sans",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
+    .chat-input input{flex:1;padding:10px 12px;border:1px solid var(--bdr);border-radius:var(--r);font-family:"Inter",sans-serif;font-size:13px;background:var(--sur);color:var(--tx);outline:none;}
     .chat-input input:focus{border-color:var(--ac);}
-    .chat-input button{padding:8px 16px;background:var(--ac);color:var(--acfg);border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-family:"DM Sans",sans-serif;}
+    .chat-input button{padding:8px 16px;background:var(--ac);color:var(--acfg);border:none;border-radius:var(--r);cursor:pointer;font-size:13px;font-family:"Inter",sans-serif;}
     .chat-input button:disabled{opacity:.5;cursor:not-allowed;}
     .chat-welcome{text-align:center;padding:2rem 1.5rem;color:var(--tx3);}
     .chat-welcome h4{color:var(--tx);font-size:15px;margin-bottom:8px;}
     .chat-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:12px;}
     .chat-chip{padding:6px 12px;border:1px solid var(--bdr);border-radius:20px;font-size:11px;cursor:pointer;background:var(--sur);color:var(--tx2);transition:all .15s;}
-    .chat-chip:hover{border-color:var(--ac);color:var(--ac);}
-    .chat-toggle{background:none;border:1px solid var(--bdr2);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-size:13px;color:var(--tx2);display:inline-flex;align-items:center;gap:5px;font-family:"DM Sans",sans-serif;}
-    .chat-toggle:hover{background:var(--sur2);color:var(--tx);}
+    .chat-chip:hover{border-color:var(--ac);color:var(--ac);background:rgba(13,148,136,.05);}
+    .chat-toggle{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);padding:6px 10px;cursor:pointer;font-size:13px;color:#fff;display:inline-flex;align-items:center;gap:5px;font-family:"Inter",sans-serif;}
+    .chat-toggle:hover{background:rgba(255,255,255,.2);}
     .chat-toggle.active{background:var(--ac);color:var(--acfg);border-color:var(--ac);}
     @media(max-width:900px){.chat-side{position:fixed;right:0;top:0;height:100vh;z-index:1000;box-shadow:-4px 0 24px rgba(0,0,0,.08);}.chat-side.closed{margin-right:0;transform:translateX(100%);}}
     /* Angebot Preview Modal */
@@ -225,7 +225,7 @@
   <div class="topbar">
     <div class="logo">Deal<span>Desk</span></div>
     <div class="sp"></div>
-    <span id="uname" style="font-size:12px;color:var(--tx3);"></span>
+    <span id="uname" style="font-size:12px;color:rgba(255,255,255,.7);"></span>
     <select id="org-select" class="org-sel" title="Unternehmen wechseln" onchange="onOrgChange(this.value)">
       <option value="smile">Smile AI</option>
       <option value="kaske-group">Kaske Group</option>
@@ -336,6 +336,10 @@
         <span style="font-size:20px">⚠</span>
         <div style="flex:1"><div class="wbtit" id="wtit"></div><div class="wbsub" id="wsub"></div></div>
         <button class="vbtn" onclick="doTab('master')">Verlängerungen starten</button>
+        <button class="vbtn" onclick="sendSlackAlerts()" style="background:var(--bbg);color:var(--blue);margin-left:8px">💬 Slack Alerts</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin:10px 0;gap:8px">
+        <button class="sbtn" onclick="sendSlackAlerts()" style="display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:8px 16px">💬 Slack Alerts senden</button>
       </div>
       <div class="tcard"><div class="twrap">
         <table><thead><tr><th onclick="sortF('kunde')">Kunde</th><th>Leistungen</th><th onclick="sortF('tage')">Tage</th><th onclick="sortF('ende')">Vertragsende</th><th onclick="sortF('invest')">Invest</th><th></th></tr></thead>
@@ -370,7 +374,7 @@
       <div class="chat-head">
         <span style="font-size:16px">🤖</span>
         <h3>DealDesk AI Assistent</h3>
-        <button class="sbtn" onclick="toggleChat()" style="padding:4px 10px;font-size:11px">✕</button>
+        <button class="sbtn" onclick="toggleChat()" style="padding:4px 10px;font-size:11px;background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.2)">✕</button>
       </div>
       <div class="chat-msgs" id="chat-msgs">
         <div class="chat-welcome" id="chat-welcome">
@@ -510,7 +514,7 @@ var M_CATS=[]; // selected clusters for matrix (empty = Alle/overview)
 var V_SORT='kunde',V_DIR=1; // 1=asc, -1=desc
 var F_SORT='ende',F_DIR=1;
 var pieInst=null,barInst=null;
-var COLORS=['#1D9E75','#378ADD','#BA7517','#D85A30','#7F77DD','#D4537E','#888780'];
+var COLORS=['#0D9488','#0284C7','#D97706','#DC2626','#7C3AED','#EC4899','#64748B'];
 
 /* ── Angebotsmaster Daten ── */
 var AM_DATA = {
@@ -721,8 +725,124 @@ async function doLoad(){
     if(r.error){toast('DB-Fehler: '+r.error.message);console.error('Supabase:',r.error);return;}
     DATA=r.data||[];
     renderCEO();renderV();renderMatrix();renderFrueh();
+    // Process pending uploads from SharePoint
+    var pending=DATA.filter(function(d){return d.notiz&&d.notiz.indexOf('pending:')===0;});
+    if(pending.length)processPending(pending);
+    else autoSlackExpiryCheck(); // Only check expiry if no pending uploads
   }catch(e){toast('Verbindungsfehler: '+e.message);console.error('doLoad:',e);}
 }
+
+async function processPending(items){
+  toast('📥 '+items.length+' Vertrag/Verträge aus SharePoint werden analysiert...');
+  for(var i=0;i<items.length;i++){
+    var item=items[i];
+    try{
+      if(!item.pdf_url)continue;
+      var sr=await SB.storage.from('vertraege').createSignedUrl(item.pdf_url,300);
+      if(!sr.data||!sr.data.signedUrl){console.error('No signed URL for',item.pdf_url);continue;}
+      var pdfResp=await fetch(sr.data.signedUrl);
+      if(!pdfResp.ok)continue;
+      var blob=await pdfResp.blob();
+      var b64=await new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result.split(',')[1]);};r.readAsDataURL(blob);});
+      var parsed=await doExtract(b64);
+      if(!parsed)continue;
+      var row={
+        kunde:parsed.kunde,angebotsnr:parsed.angebotsnr,angebotsdatum:parsed.angebotsdatum,
+        vertragsbeginn:parsed.vertragsbeginn,laufzeit:parsed.laufzeit,laufzeit_monate:parsed.laufzeit_monate||12,
+        verlaengerung:parsed.verlaengerung||'12 Monate',vertragsende_iso:parsed.vertragsende_iso||null,
+        invest_brutto:parsed.invest_brutto||null,invest_brutto_label:parsed.invest_brutto_label||null,
+        invest_rabatt_prozent:parsed.invest_rabatt_prozent||null,invest_final:parsed.invest_final||null,
+        invest_final_label:parsed.invest_final_label||null,invest_rhythmus:parsed.invest_rhythmus||'jaehrlich',
+        invest:parsed.invest_final||null,invest_label:parsed.invest_final_label||null,
+        leistungen:parsed.leistungen||[],notiz:parsed.notiz||''
+      };
+      await SB.from('kunden').update(row).eq('id',item.id);
+      toast('✓ '+parsed.kunde+' verarbeitet ('+(i+1)+'/'+items.length+')');
+      // Auto Slack: neuer Vertrag
+      slackNotifyNew(parsed);
+    }catch(e){console.error('Pending processing error:',e);toast('⚠ Fehler bei Verarbeitung: '+e.message);}
+  }
+  await doLoad();
+}
+
+/* ── Auto Slack: Neuer Vertrag ── */
+async function slackNotifyNew(parsed){
+  try{
+    var channels=await loadSlackChannels();
+    if(!channels.length)return;
+    var ch=matchChannel(parsed.kunde,channels);
+    if(!ch)return;
+    var leist=(parsed.leistungen||[]).join(', ')||'—';
+    var invest=parsed.invest_final||parsed.invest||'—';
+    var msg='🆕 *Neuer Vertrag in DealDesk!*\n'+
+      '• Kunde: *'+parsed.kunde+'*\n'+
+      '• Angebotsnr: '+(parsed.angebotsnr||'—')+'\n'+
+      '• Vertragsbeginn: '+(parsed.vertragsbeginn||'—')+'\n'+
+      '• Laufzeit: '+(parsed.laufzeit||'—')+'\n'+
+      '• Invest: '+fmtE(invest)+' '+(parsed.invest_rhythmus==='monatlich'?'mtl.':'p.a.')+'\n'+
+      '• Leistungen: '+leist;
+    await fetch('/api/slack',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'send',channel:ch.id,text:msg})});
+  }catch(e){console.error('Slack notify new error:',e);}
+}
+
+/* ── Auto Slack: Ablauf-Warnung (1x pro Woche pro Vertrag) ── */
+async function autoSlackExpiryCheck(){
+  var now=new Date();
+  var lastCheck=ls('slack_expiry_check');
+  // Nur 1x pro Tag prüfen
+  var today=now.toISOString().slice(0,10);
+  if(lastCheck===today)return;
+
+  var expiring=DATA.filter(function(r){
+    var st=stOf(r);
+    if(!st.end)return false;
+    var diff=Math.floor((st.end-now)/(1000*60*60*24));
+    return diff>0&&diff<=180;
+  });
+  if(!expiring.length)return;
+
+  // Prüfen welche diese Woche schon benachrichtigt wurden
+  var notified=JSON.parse(ls('slack_notified')||'{}');
+  var weekKey=getWeekKey(now);
+  var toNotify=expiring.filter(function(r){
+    var key=r.angebotsnr||r.id;
+    return!notified[key]||notified[key]!==weekKey;
+  });
+  if(!toNotify.length){localStorage.setItem('slack_expiry_check',today);return;}
+
+  var channels=await loadSlackChannels();
+  if(!channels.length)return;
+
+  var sent=0;
+  for(var i=0;i<toNotify.length;i++){
+    var r=toNotify[i];
+    var ch=matchChannel(r.kunde,channels);
+    if(!ch)continue;
+    var st=stOf(r);
+    var diff=Math.floor((st.end-now)/(1000*60*60*24));
+    var emoji=diff<90?'🔴':'🟡';
+    var leist=(r.leistungen||[]).join(', ')||'—';
+    var invest=r.invest_final||r.invest||'—';
+    var msg=emoji+' *Vertrag läuft bald ab!*\n'+
+      '• Kunde: *'+r.kunde+'*\n'+
+      '• Angebotsnr: '+r.angebotsnr+'\n'+
+      '• Vertragsende: '+fmtD(r.vertragsende_iso)+' (noch *'+diff+' Tage*)\n'+
+      '• Invest: '+fmtE(invest)+' '+(r.invest_rhythmus==='monatlich'?'mtl.':'p.a.')+'\n'+
+      '• Leistungen: '+leist+'\n'+
+      '➡️ Bitte Verlängerung besprechen!';
+    try{
+      var res=await fetch('/api/slack',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'send',channel:ch.id,text:msg})});
+      if(res.ok){sent++;notified[r.angebotsnr||r.id]=weekKey;}
+    }catch(e){console.error('Slack expiry error:',e);}
+  }
+  localStorage.setItem('slack_notified',JSON.stringify(notified));
+  localStorage.setItem('slack_expiry_check',today);
+  if(sent)toast('📢 '+sent+' Ablauf-Warnung(en) an Slack gesendet');
+}
+
+function getWeekKey(d){var t=new Date(d);t.setDate(t.getDate()-t.getDay());return t.toISOString().slice(0,10);}
 
 /* ── Tabs ── */
 function doTab(t){
@@ -820,7 +940,7 @@ function renderV(){
 
 /* ── Leistungsmatrix (eine Zeile pro Kunde, Maßnahmen zusammengeführt) ── */
 var CATS_LIST=['Analytics','Operativ','Consulting','Amazon','Reporting','Knowledge','International'];
-var CAT_COLORS={'Analytics':'#1D9E75','Operativ':'#378ADD','Consulting':'#BA7517','Amazon':'#D85A30','Reporting':'#7F77DD','Knowledge':'#D4537E','International':'#888780'};
+var CAT_COLORS={'Analytics':'#0D9488','Operativ':'#0284C7','Consulting':'#D97706','Amazon':'#DC2626','Reporting':'#7C3AED','Knowledge':'#EC4899','International':'#64748B'};
 
 function toggleMatrixCat(cat){
   if(cat===''){M_CATS=[];}
@@ -1257,7 +1377,7 @@ async function doExtract(b64){
   var resp;
   try{
     resp=await fetch('/api/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,messages:[{role:'user',content:[
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:[
         {type:'document',source:{type:'base64',media_type:'application/pdf',data:b64}},
         {type:'text',text:'Du analysierst ein Smile AI Angebotsdokument.\nAntworte NUR mit validem JSON. Kein Markdown.\n\n1. KUNDE: Nach "Angebotsempfaenger:" oder "Angebot fuer:". Nur Firmenname. Niemals "Smile AI GmbH" oder "Dr. Kaske GmbH".\n2. ANGEBOTSNR & DATUM: Nach "Angebotsnummer:" und "Angebotsdatum:". Exakt kopieren.\n3. LEISTUNGEN: Modulnamen 1:1 aus der linken Tabellenspalte. Kategoriezeilen weglassen.\n4. INVEST: Kurz vor/nach "Details:" alle Euro-Betraege. Letzte/kleinste=invest_final. invest_rhythmus: "monatlich" oder "jaehrlich".\n5. LAUFZEIT: Aus "bei X Monaten Laufzeit".\n6. VERTRAGSBEGINN: Aus "Laufzeit des Vertrages beginnt...".\n\n{"kunde":"","angebotsnr":"","angebotsdatum":"","vertragsbeginn":"","laufzeit":"","laufzeit_monate":12,"verlaengerung":"12 Monate","vertragsende_iso":null,"leistungen":[],"invest_brutto":0,"invest_brutto_label":"","invest_rabatt_prozent":null,"invest_final":0,"invest_final_label":"","invest_rhythmus":"jaehrlich","notiz":""}'}
       ]}]})
@@ -1412,7 +1532,7 @@ async function chatSend(){
     var hist=CHAT_HISTORY.slice(-10);
 
     var resp=await fetch('/api/anthropic',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:sysPrompt,messages:hist})
+      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,system:sysPrompt,messages:hist})
     });
     if(!resp.ok){
       var errBody='';try{var ej=await resp.json();errBody=ej.error&&ej.error.message?ej.error.message:JSON.stringify(ej);}catch(e){errBody=resp.status;}
@@ -1431,6 +1551,87 @@ async function chatSend(){
   CHAT_BUSY=false;
   gi('chat-btn').disabled=false;
   gi('chat-in').focus();
+}
+
+/* ── Slack Alerts ── */
+var SLACK_CHANNELS=null;
+
+async function loadSlackChannels(){
+  if(SLACK_CHANNELS)return SLACK_CHANNELS;
+  try{
+    var r=await fetch('/api/slack',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'list_channels'})});
+    if(!r.ok)throw new Error('Slack API Fehler '+r.status);
+    var j=await r.json();
+    SLACK_CHANNELS=j.channels||[];
+    return SLACK_CHANNELS;
+  }catch(e){toast('⚠ Slack: '+e.message);return[];}
+}
+
+function matchChannel(kunde,channels){
+  // Try to match customer name to Slack channel
+  var name=kunde.toLowerCase()
+    .replace(/gmbh|&\s*co\.?\s*kg|ag|se|e\.v\.?|inc\.?|ltd\.?|deutschland|pharma|arzneimittel|heilmittel|vital|pütter|ingelheim|vetmedica/gi,'')
+    .trim().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'').replace(/-+/g,'-').replace(/^-|-$/g,'');
+  // Direct match
+  var ch=channels.find(function(c){return c.name===name;});
+  if(ch)return ch;
+  // Partial match - channel contains customer keyword or vice versa
+  var parts=name.split('-').filter(function(p){return p.length>2;});
+  for(var i=0;i<parts.length;i++){
+    ch=channels.find(function(c){return c.name===parts[i]||c.name.indexOf(parts[i])>=0;});
+    if(ch)return ch;
+  }
+  return null;
+}
+
+async function sendSlackAlerts(){
+  toast('📡 Lade Slack-Channels...');
+  var channels=await loadSlackChannels();
+  if(!channels.length){toast('⚠ Keine Slack-Channels gefunden');return;}
+
+  var now=new Date(),sent=0,skipped=0;
+  var alerts=[];
+
+  DATA.forEach(function(r){
+    var st=stOf(r);
+    if(!st.end)return;
+    var diff=Math.floor((st.end-now)/(1000*60*60*24));
+    // Rot: <90 Tage, Gelb: <180 Tage
+    if(diff>180||diff<0)return;
+
+    var ch=matchChannel(r.kunde,channels);
+    if(!ch){skipped++;return;}
+
+    var emoji=diff<90?'🔴':'🟡';
+    var leist=(r.leistungen||[]).join(', ')||'—';
+    var invest=r.invest_final||r.invest||'—';
+    var rhythmus=r.invest_rhythmus==='monatlich'?'mtl.':'p.a.';
+
+    var msg=emoji+' *Vertrag läuft bald ab!*\n'+
+      '• Kunde: *'+r.kunde+'*\n'+
+      '• Angebotsnr: '+r.angebotsnr+'\n'+
+      '• Vertragsende: '+fmtD(r.vertragsende_iso)+' (noch *'+diff+' Tage*)\n'+
+      '• Invest: '+fmtE(invest)+' '+rhythmus+'\n'+
+      '• Leistungen: '+leist+'\n'+
+      '➡️ Bitte Verlängerung besprechen!';
+
+    alerts.push({channel:ch,message:msg,kunde:r.kunde,diff:diff});
+  });
+
+  if(!alerts.length){toast('✓ Keine Alerts nötig (alle Verträge >180 Tage)');return;}
+
+  // Confirm before sending
+  if(!confirm(alerts.length+' Alert(s) werden an Slack gesendet:\n\n'+alerts.map(function(a){return'→ #'+a.channel.name+' ('+a.kunde+', '+a.diff+' Tage)';}).join('\n')+'\n\nSenden?'))return;
+
+  for(var i=0;i<alerts.length;i++){
+    try{
+      var r=await fetch('/api/slack',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'send',channel:alerts[i].channel.id,text:alerts[i].message})});
+      if(r.ok)sent++;
+      else{var e=await r.json();console.error('Slack send error:',e);skipped++;}
+    }catch(e){console.error('Slack error:',e);skipped++;}
+  }
+  toast('✓ '+sent+' Alert(s) gesendet'+(skipped?' ('+skipped+' übersprungen)':''));
 }
 
 /* ── Org-Dropdown (Platzhalter) ── */
